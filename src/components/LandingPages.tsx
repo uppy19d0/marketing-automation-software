@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLandingPages } from "../hooks/useLandingPages";
+import { LandingPagePreview } from "./LandingPagePreview";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -397,111 +399,42 @@ function PreviewDialog({ isOpen, onClose, formData, selectedTemplate }: PreviewD
 
 export function LandingPages() {
   const { t, language } = useLanguage();
-  const [landingPages, setLandingPages] = useState<LandingPage[]>([
-    {
-      id: 1,
-      name: "Guía Completa de Marketing Digital 2025",
-      template: "Lead Magnet Pro",
-      visits: 1247,
-      submissions: 189,
-      conversionRate: 15.2,
-      status: "Publicada",
-      url: "/l/guia-marketing-2025",
-      title: "Descarga tu Guía Gratuita de Marketing 2025",
-      subtitle: "Las estrategias más efectivas para hacer crecer tu negocio",
-      description: "Accede a 50+ páginas de estrategias probadas, casos de estudio y plantillas listas para usar.",
-      benefits: [
-        "Estrategias de SEO actualizadas para 2025",
-        "Casos de estudio con ROI comprobado",
-        "Plantillas de campañas descargables",
-        "Checklist de implementación paso a paso"
-      ],
-      buttonText: "Descargar Guía Gratuita",
-      successMessage: "¡Excelente! Revisa tu email en los próximos 5 minutos para acceder a la guía.",
-      fields: { name: true, email: true, company: true, phone: false, jobTitle: false, message: false },
-      gdprConsent: true,
-      styling: {
-        primaryColor: "#0EA5E9",
-        backgroundColor: "#FFFFFF",
-        textColor: "#111827",
-        buttonStyle: "gradient",
-        layoutStyle: "split",
-      },
-      seo: {
-        metaTitle: "Guía Gratuita de Marketing Digital 2025 | TropiMarketing",
-        metaDescription: "Descarga nuestra guía completa con las mejores estrategias de marketing digital. Casos reales, plantillas y más.",
-      },
-      createdAt: new Date("2025-01-15"),
-      lastEdited: new Date("2025-02-01"),
-      bounceRate: 34.5,
-      avgTimeOnPage: 145,
-    },
-    {
-      id: 2,
-      name: "Newsletter Semanal - Tendencias Marketing",
-      template: "Newsletter Premium",
-      visits: 3421,
-      submissions: 542,
-      conversionRate: 15.8,
-      status: "Publicada",
-      url: "/l/newsletter-tendencias",
-      title: "Las mejores insights de marketing, cada semana",
-      subtitle: "Únete a 10,000+ marketers que confían en nosotros",
-      description: "Recibe contenido exclusivo, análisis de tendencias y estrategias accionables directamente en tu inbox.",
-      benefits: [
-        "Análisis semanal de tendencias",
-        "Estrategias probadas por expertos",
-        "Casos de estudio exclusivos",
-        "Cancela tu suscripción cuando quieras"
-      ],
-      buttonText: "Suscribirme Gratis",
-      successMessage: "¡Bienvenido a la comunidad! Tu primer newsletter llegará el próximo lunes.",
-      fields: { name: true, email: true, company: false, phone: false, jobTitle: true, message: false },
-      gdprConsent: true,
-      styling: {
-        primaryColor: "#10B981",
-        backgroundColor: "#F9FAFB",
-        textColor: "#111827",
-        buttonStyle: "solid",
-        layoutStyle: "centered",
-      },
-      seo: {
-        metaTitle: "Newsletter de Marketing | Tendencias y Estrategias Semanales",
-        metaDescription: "Únete a nuestra newsletter y recibe las mejores estrategias de marketing cada semana. Más de 10,000 suscriptores.",
-      },
-      createdAt: new Date("2025-01-10"),
-      lastEdited: new Date("2025-02-05"),
-      bounceRate: 28.3,
-      avgTimeOnPage: 98,
-    },
-    {
-      id: 3,
-      name: "Webinar: Automatización con IA",
-      template: "Webinar Pro",
-      visits: 0,
-      submissions: 0,
-      conversionRate: 0,
-      status: "Borrador",
-      url: "/l/webinar-ia-marketing",
-      title: "Webinar Gratuito: Automatiza tu Marketing con IA",
-      subtitle: "15 de Marzo, 2025 - 4:00 PM EST",
-      description: "Descubre cómo usar IA para automatizar tus campañas y aumentar conversiones en un 300%.",
-      benefits: [
-        "Demo en vivo de herramientas de IA",
-        "Casos de uso prácticos y replicables",
-        "Sesión de Q&A con expertos",
-        "Certificado digital de asistencia"
-      ],
-      buttonText: "Reservar Mi Plaza Gratuita",
-      successMessage: "¡Plaza confirmada! Te enviaremos recordatorios y el enlace de acceso 24h antes.",
-      fields: { name: true, email: true, company: true, phone: false, jobTitle: true, message: false },
-      gdprConsent: true,
-      styling: defaultStyling,
-      seo: defaultSEO,
-      createdAt: new Date("2025-02-06"),
-      lastEdited: new Date("2025-02-06"),
-    },
-  ]);
+  // Use real data from database via custom hook
+  const {
+    landingPages: landingPagesFromDB,
+    loading: loadingPages,
+    createLandingPage: createPage,
+    updateLandingPage: updatePage,
+    deleteLandingPage: deletePage,
+    publishLandingPage: publishPage,
+    refresh: refreshPages,
+  } = useLandingPages();
+
+  // Map DB data to component interface
+  const landingPages = landingPagesFromDB.map((page: any) => ({
+    id: page.id || page._id,
+    name: page.name,
+    template: "Custom", // Template info not stored in DB
+    visits: page.visits || 0,
+    submissions: page.submissions || 0,
+    conversionRate: page.conversionRate || 0,
+    status: page.status === 'published' ? 'Publicada' : page.status === 'draft' ? 'Borrador' : 'Archivada',
+    url: `/l/${page.slug}`,
+    title: page.title,
+    subtitle: page.subtitle || '',
+    description: page.description || page.content || '',
+    benefits: page.benefits || [],
+    buttonText: page.buttonText || 'Descargar ahora',
+    successMessage: page.successMessage || '¡Gracias! Revisa tu email.',
+    fields: page.formFields || { name: true, email: true, company: false, phone: false, jobTitle: false, message: false },
+    gdprConsent: page.gdprConsent !== false,
+    styling: page.styling || defaultStyling,
+    seo: page.seo || defaultSEO,
+    createdAt: new Date(page.createdAt || Date.now()),
+    lastEdited: new Date(page.updatedAt || Date.now()),
+    bounceRate: page.bounceRate || 0,
+    avgTimeOnPage: page.avgTimeOnPage || 0,
+  }));
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -843,12 +776,27 @@ export function LandingPages() {
     <div className="space-y-6">
       {/* Preview Dialog */}
       {previewData && (
-        <PreviewDialog
-          isOpen={isPreviewOpen}
-          onClose={() => setIsPreviewOpen(false)}
-          formData={previewData}
-          selectedTemplate={selectedTemplate}
-        />
+        <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+          <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto p-0">
+            <DialogDescription className="sr-only">
+              Vista previa de la landing page funcional
+            </DialogDescription>
+            <div className="sticky top-0 z-10 bg-background border-b p-4">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  Vista Previa - {previewData.title || "Landing Page"}
+                </DialogTitle>
+                <Button variant="ghost" size="sm" onClick={() => setIsPreviewOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="overflow-y-auto">
+              <LandingPagePreview data={previewData} landingPageId={previewData.id} />
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Header with Stats */}
@@ -1485,8 +1433,23 @@ export function LandingPages() {
       </div>
 
       {/* Landing Pages List */}
-      <div className="grid gap-4">
-        {displayedPages.length === 0 ? (
+      {loadingPages ? (
+        <div className="grid gap-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                  <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {displayedPages.length === 0 ? (
           <Card>
             <CardContent className="pt-6 px-4 sm:px-6 text-center py-12 sm:py-16">
               <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
@@ -1681,7 +1644,8 @@ export function LandingPages() {
             </Card>
           ))
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
