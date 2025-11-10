@@ -18,11 +18,10 @@ cd server
 npm install
 
 echo ""
-echo "👤 Creando usuario administrador..."
-npm run seed:admin
-
-echo ""
 echo "✅ Configuración completada!"
+echo ""
+echo "ℹ️  El usuario administrador se creará automáticamente"
+echo "   cuando inicies el servidor por primera vez."
 echo ""
 echo "Para iniciar el sistema:"
 echo "1. En una terminal: cd server && npm run dev"

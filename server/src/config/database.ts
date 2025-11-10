@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { seedDatabase } from '../utils/seedDatabase';
 
 const connectDB = async (): Promise<void> => {
   try {
@@ -7,6 +8,9 @@ const connectDB = async (): Promise<void> => {
     await mongoose.connect(mongoURI);
 
     console.log('✅ MongoDB connected successfully');
+
+    // Seed database with initial data
+    await seedDatabase();
 
     // Connection events
     mongoose.connection.on('error', (err) => {

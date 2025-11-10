@@ -20,10 +20,9 @@ cp .env.example .env
 
 # Instalar dependencias (si no están instaladas)
 npm install
-
-# Crear el usuario administrador en la base de datos
-npm run seed:admin
 ```
+
+**Nota:** El usuario administrador se crea automáticamente cuando el servidor se inicia por primera vez. No necesitas ejecutar ningún script adicional.
 
 ### 2. Iniciar el Servidor Backend
 
@@ -32,7 +31,7 @@ npm run seed:admin
 npm run dev
 ```
 
-El servidor se ejecutará en `http://localhost:5000`
+El servidor se ejecutará en `http://localhost:5000` y creará automáticamente el usuario administrador si no existe.
 
 ### 3. Iniciar el Frontend
 
@@ -68,7 +67,7 @@ El frontend se ejecutará en `http://localhost:5173` (o el puerto que Vite asign
 - ✅ Encriptación de contraseñas con bcrypt
 - ✅ Generación de tokens JWT
 - ✅ Middleware de protección de rutas
-- ✅ Script de seed para crear usuario administrador
+- ✅ Seed automático de usuario administrador al iniciar el servidor
 
 ## Estructura de Archivos Nuevos/Modificados
 
@@ -84,8 +83,12 @@ src/
 
 server/
 ├── src/
+│   ├── config/
+│   │   └── database.ts           # Actualizado: Ejecuta seed automático
+│   ├── utils/
+│   │   └── seedDatabase.ts       # Nuevo: Función de seed automático
 │   ├── scripts/
-│   │   └── seedAdmin.ts          # Nuevo: Script para crear admin
+│   │   └── seedAdmin.ts          # Nuevo: Script manual (opcional)
 │   ├── controllers/
 │   │   └── authController.ts     # Ya existía: Controlador de auth
 │   ├── models/
@@ -110,7 +113,7 @@ Si ves un error de conexión a MongoDB, asegúrate de que:
 3. El puerto 27017 esté disponible
 
 ### Error "Usuario ya existe"
-Si ejecutas `npm run seed:admin` y el usuario ya existe, el script te lo indicará. No es necesario ejecutarlo nuevamente.
+El sistema verifica automáticamente si el usuario admin existe antes de crearlo. Si ya existe, simplemente mostrará un mensaje informativo y continuará normalmente. Esto es completamente normal y esperado en reinicios del servidor.
 
 ### Error de CORS
 Si ves errores de CORS, verifica que:
