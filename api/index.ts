@@ -20,11 +20,13 @@ dotenv.config();
 const app: Application = express();
 
 // Trust proxy - Required for rate limiting behind proxies (Vercel, AWS Lambda, etc.)
-app.set('trust proxy', 1);
+// Set to true to trust all proxies, or 1 to trust first proxy
+app.set('trust proxy', true);
 
 console.log('🔧 [Config] Environment variables loaded');
 console.log('🔧 [Config] MONGODB_URI exists:', !!process.env.MONGODB_URI);
 console.log('🔧 [Config] NODE_ENV:', process.env.NODE_ENV || 'development');
+console.log('🔧 [Config] Trust proxy setting:', app.get('trust proxy'));
 
 // MongoDB connection with caching for serverless
 let cachedDb: typeof mongoose | null = null;
@@ -91,6 +93,10 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   // Skip rate limiting for health checks
   skip: (req) => req.path === '/api/health' || req.path === '/api/health/live',
+  // Disable validation warnings in serverless environments
+  validate: {
+    xForwardedForHeader: false, // Disable X-Forwarded-For validation
+  },
 });
 
 console.log('🔧 [Config] Rate limiting configured (100 requests per 15 minutes)');
