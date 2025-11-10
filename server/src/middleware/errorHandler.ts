@@ -7,7 +7,7 @@ interface ErrorResponse {
   stack?: string;
 }
 
-export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+export const errorHandler = (err: any, _req: Request, res: Response, _next: NextFunction) => {
   let error = { ...err };
   error.message = err.message;
 

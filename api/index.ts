@@ -68,7 +68,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Connect to database before handling requests
-app.use(async (req: Request, res: Response, next: any) => {
+app.use(async (_req: Request, res: Response, next: any) => {
   try {
     await connectToDatabase();
     next();
@@ -89,7 +89,7 @@ app.use('/api/segments', segmentRoutes);
 app.use('/api/landing-pages', landingPageRoutes);
 
 // Root route
-app.get('/api', (req: Request, res: Response) => {
+app.get('/api', (_req: Request, res: Response) => {
   res.json({
     message: 'Marketing Automation API',
     version: '1.0.0',

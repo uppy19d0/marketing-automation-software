@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
  * @route   GET /api/health
  * @access  Public
  */
-export const healthCheck = async (req: Request, res: Response): Promise<void> => {
+export const healthCheck = async (_req: Request, res: Response): Promise<void> => {
   try {
     // Check MongoDB connection
     const dbStatus = mongoose.connection.readyState;
@@ -54,7 +54,7 @@ export const healthCheck = async (req: Request, res: Response): Promise<void> =>
  * @route   GET /api/health/detailed
  * @access  Public
  */
-export const detailedHealthCheck = async (req: Request, res: Response): Promise<void> => {
+export const detailedHealthCheck = async (_req: Request, res: Response): Promise<void> => {
   try {
     const startTime = Date.now();
     
@@ -130,7 +130,7 @@ export const detailedHealthCheck = async (req: Request, res: Response): Promise<
  * @route   GET /api/health/ready
  * @access  Public
  */
-export const readinessCheck = async (req: Request, res: Response): Promise<void> => {
+export const readinessCheck = async (_req: Request, res: Response): Promise<void> => {
   try {
     const dbStatus = mongoose.connection.readyState;
     const isReady = dbStatus === 1;
@@ -165,7 +165,7 @@ export const readinessCheck = async (req: Request, res: Response): Promise<void>
  * @route   GET /api/health/live
  * @access  Public
  */
-export const livenessCheck = (req: Request, res: Response): void => {
+export const livenessCheck = (_req: Request, res: Response): void => {
   res.status(200).json({
     success: true,
     alive: true,

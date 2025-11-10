@@ -3,7 +3,7 @@ import Segment from '../models/Segment';
 import Contact from '../models/Contact';
 import { AuthRequest } from '../middleware/auth';
 
-export const getSegments = async (req: AuthRequest, res: Response) => {
+export const getSegments = async (_req: AuthRequest, res: Response) => {
   try {
     const segments = await Segment.find({ isActive: true }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: segments });
