@@ -38,11 +38,14 @@ import {
 } from "./components/ui/dropdown-menu";
 import { Toaster } from "./components/ui/sonner";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { Login } from "./components/Login";
 
 type ViewType = "dashboard" | "contacts" | "segments" | "campaigns" | "landings" | "automations" | "reports" | "settings";
 
 function AppContent() {
   const { t } = useLanguage();
+  const { user, loading, isAuthenticated, logout } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>("dashboard");
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -101,6 +104,23 @@ function AppContent() {
         return <DashboardNew />;
     }
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <Logo variant="full" size="lg" />
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login if not authenticated
+  if (!isAuthenticated) {
+    return <Login />;
+  }
 
   return (
     <div className="min-h-screen bg-background transition-colors overflow-x-hidden">
@@ -222,8 +242,8 @@ function AppContent() {
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>
                       <div>
-                        <p className="text-sm">Admin Demo</p>
-                        <p className="text-xs text-muted-foreground">admin@demo.local</p>
+                        <p className="text-sm">{user?.name || "Usuario"}</p>
+                        <p className="text-xs text-muted-foreground">{user?.email || ""}</p>
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
@@ -232,7 +252,7 @@ function AppContent() {
                       {t("nav.settings")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={logout}>
                       {t("common.search") === "Buscar" ? "Cerrar sesión" : "Log out"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -257,7 +277,9 @@ function AppContent() {
 export default function App() {
   return (
     <LanguageProvider>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </LanguageProvider>
   );
 }

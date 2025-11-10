@@ -31,12 +31,20 @@ class AuthService {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await api.post(API_ENDPOINTS.LOGIN, credentials);
     
-    if (response.token) {
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+    // Backend returns data.token and data.user
+    const token = response.data?.token || response.token;
+    const user = response.data?.user || response.user;
+    
+    if (token) {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
     }
     
-    return response;
+    return {
+      success: true,
+      token,
+      user,
+    };
   }
 
   async register(data: RegisterData): Promise<AuthResponse> {
@@ -63,7 +71,7 @@ class AuthService {
 
   async getCurrentUser(): Promise<User> {
     const response = await api.get(API_ENDPOINTS.ME);
-    return response.user;
+    return response.data || response.user;
   }
 
   getToken(): string | null {
