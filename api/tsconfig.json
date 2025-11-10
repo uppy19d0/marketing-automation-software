@@ -2,7 +2,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "..",
     "module": "commonjs",
     "target": "es2020",
     "lib": ["es2020"],
@@ -12,6 +12,6 @@
     "resolveJsonModule": true,
     "moduleResolution": "node"
   },
-  "include": ["./**/*"],
+  "include": ["./**/*", "../server/src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
