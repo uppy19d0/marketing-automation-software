@@ -9,7 +9,7 @@ import { Textarea } from "./ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Progress } from "./ui/progress";
-import { Plus, Mail, BarChart3, Calendar, Sparkles, Check, AlertCircle } from "lucide-react";
+import { Plus, Mail, Sparkles, Check, AlertCircle } from "lucide-react";
 import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -50,7 +50,6 @@ export function CampaignsNew() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [abTestEnabled, setAbTestEnabled] = useState(false);
-  const [showAiPanel, setShowAiPanel] = useState(false);
 
   const steps = ["Detalles", "Contenido", "Audiencia", "Revisión"];
 

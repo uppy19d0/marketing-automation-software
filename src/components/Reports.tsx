@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { Download, TrendingDown, Users, Mail, MousePointerClick, Target } from "lucide-react";
+import { Download, TrendingDown } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useLanguage } from "../contexts/LanguageContext";
@@ -29,7 +28,7 @@ const campaignMetrics = [
 ];
 
 export function Reports() {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   
   return (
     <div className="space-y-6">

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Users, Mail, TrendingUp, Target, MousePointerClick, DollarSign } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Users, Mail, Target, MousePointerClick } from "lucide-react";
 
 const statsData = [
   { title: "Total de Contactos", value: "12,458", change: "+12.5%", icon: Users, color: "text-blue-600" },

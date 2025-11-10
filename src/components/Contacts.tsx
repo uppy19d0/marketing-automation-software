@@ -6,7 +6,7 @@ import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Plus, Search, Users, Mail, Tag, Download, Upload, Filter } from "lucide-react";
+import { Plus, Search, Tag, Download, Upload } from "lucide-react";
 
 const contactsData = [
   {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
@@ -7,19 +7,17 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { 
-  Plus, 
-  Eye, 
-  ExternalLink, 
-  BarChart3, 
-  Smartphone, 
-  Monitor, 
-  Edit2, 
-  Trash2, 
+import {
+  Plus,
+  Eye,
+  ExternalLink,
+  Smartphone,
+  Monitor,
+  Edit2,
+  Trash2,
   Copy,
   FileText,
   Palette,
-  Settings,
   Code,
   CheckCircle2,
   AlertCircle,
@@ -27,7 +25,6 @@ import {
   Users,
   MousePointerClick,
   Layout,
-  ImageIcon,
   Sparkles,
   X
 } from "lucide-react";

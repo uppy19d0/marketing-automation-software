@@ -21,11 +21,12 @@ const revenueData = [
   { month: "Junio", ingresos: 24800, conversiones: 290 },
 ];
 
-const deviceData = [
-  { device: "Desktop", value: 45 },
-  { device: "Mobile", value: 40 },
-  { device: "Tablet", value: 15 },
-];
+// Unused for now - can be used for device analytics in future
+// const deviceData = [
+//   { device: "Desktop", value: 45 },
+//   { device: "Mobile", value: 40 },
+//   { device: "Tablet", value: 15 },
+// ];
 
 const topCampaigns = [
   { name: "Serie de Bienvenida", openRate: 70.5, clickRate: 35.2, conversions: 289, revenue: 15680 },

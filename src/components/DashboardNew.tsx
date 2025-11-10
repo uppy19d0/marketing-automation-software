@@ -1,16 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Users, Mail, MousePointerClick, TrendingUp, Clock } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Users, Mail, MousePointerClick, TrendingUp } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { useLanguage } from "../contexts/LanguageContext";
 
-const kpiData = [
-  { title: "Contactos Totales", value: "1,247", icon: Users, trend: "+12.5%", color: "text-brand" },
-  { title: "Nuevos Hoy", value: "23", icon: TrendingUp, trend: "+8.3%", color: "text-success" },
-  { title: "Tasa de Apertura", value: "42.3%", icon: Mail, trend: "+2.1%", color: "text-warning" },
-  { title: "CTR Promedio", value: "3.8%", icon: MousePointerClick, trend: "+0.5%", color: "text-brand-600" },
-];
+// Unused for now - can be used for KPI cards in future
+// const kpiData = [
+//   { title: "Contactos Totales", value: "1,247", icon: Users, trend: "+12.5%", color: "text-brand" },
+//   { title: "Nuevos Hoy", value: "23", icon: TrendingUp, trend: "+8.3%", color: "text-success" },
+//   { title: "Tasa de Apertura", value: "42.3%", icon: Mail, trend: "+2.1%", color: "text-warning" },
+//   { title: "CTR Promedio", value: "3.8%", icon: MousePointerClick, trend: "+0.5%", color: "text-brand-600" },
+// ];
 
 const chartData = [
   { date: "Lun", aperturas: 245, clics: 89 },

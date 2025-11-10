@@ -24,7 +24,7 @@ const previewContacts = [
 ];
 
 export function Segments() {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [rules, setRules] = useState<Array<{ field: string; operator: string; value: string; logic: string }>>([
     { field: "tag", operator: "contiene", value: "nuevo", logic: "AND" }
   ]);
