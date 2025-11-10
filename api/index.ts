@@ -19,6 +19,13 @@ dotenv.config();
 
 const app: Application = express();
 
+// Trust proxy - Required for rate limiting behind proxies (Vercel, AWS Lambda, etc.)
+app.set('trust proxy', 1);
+
+console.log('🔧 [Config] Environment variables loaded');
+console.log('🔧 [Config] MONGODB_URI exists:', !!process.env.MONGODB_URI);
+console.log('🔧 [Config] NODE_ENV:', process.env.NODE_ENV || 'development');
+
 // MongoDB connection with caching for serverless
 let cachedDb: typeof mongoose | null = null;
 let isSeeded = false;
@@ -77,11 +84,16 @@ app.use(helmet({
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Skip rate limiting for health checks
+  skip: (req) => req.path === '/api/health' || req.path === '/api/health/live',
 });
 
+console.log('🔧 [Config] Rate limiting configured (100 requests per 15 minutes)');
 app.use('/api/', limiter);
 
 // CORS configuration
