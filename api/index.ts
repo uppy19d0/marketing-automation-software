@@ -13,6 +13,7 @@ import campaignRoutes from '../server/src/routes/campaignRoutes';
 import segmentRoutes from '../server/src/routes/segmentRoutes';
 import landingPageRoutes from '../server/src/routes/landingPageRoutes';
 import { errorHandler, notFound } from '../server/src/middleware/errorHandler';
+import { seedDatabase } from '../server/src/utils/seedDatabase';
 
 dotenv.config();
 
@@ -20,25 +21,51 @@ const app: Application = express();
 
 // MongoDB connection with caching for serverless
 let cachedDb: typeof mongoose | null = null;
+let isSeeded = false;
 
 async function connectToDatabase() {
+  console.log('🔄 [DB] Attempting to connect to database...');
+  console.log('🔄 [DB] Cached connection exists:', !!cachedDb);
+
   if (cachedDb) {
+    console.log('✅ [DB] Using cached database connection');
+    console.log('✅ [DB] Connection state:', mongoose.connection.readyState);
     return cachedDb;
   }
 
   const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/marketing-automation';
+  console.log('🔄 [DB] MongoDB URI:', mongoURI.replace(/\/\/.*@/, '//***:***@')); // Hide credentials in logs
 
   try {
+    console.log('🔄 [DB] Connecting to MongoDB...');
     const db = await mongoose.connect(mongoURI, {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
-    
+
     cachedDb = db;
-    console.log('✅ MongoDB connected successfully');
+    console.log('✅ [DB] MongoDB connected successfully');
+    console.log('✅ [DB] Database name:', mongoose.connection.name);
+    console.log('✅ [DB] Connection state:', mongoose.connection.readyState);
+    console.log('✅ [DB] Host:', mongoose.connection.host);
+
+    // Run database seeding only once
+    if (!isSeeded) {
+      console.log('🌱 [DB] Running database seeding...');
+      await seedDatabase();
+      isSeeded = true;
+      console.log('✅ [DB] Database seeding completed');
+    } else {
+      console.log('ℹ️  [DB] Database already seeded, skipping...');
+    }
+
     return db;
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error);
+    console.error('❌ [DB] MongoDB connection failed:', error);
+    console.error('❌ [DB] Error details:', {
+      name: (error as Error).name,
+      message: (error as Error).message,
+    });
     throw error;
   }
 }
@@ -69,13 +96,18 @@ app.use(express.urlencoded({ extended: true }));
 
 // Connect to database before handling requests
 app.use(async (_req: Request, res: Response, next: any) => {
+  console.log('🔄 [Middleware] Database connection middleware triggered');
   try {
+    console.log('🔄 [Middleware] Calling connectToDatabase...');
     await connectToDatabase();
+    console.log('✅ [Middleware] Database connection successful, proceeding to next middleware');
     next();
   } catch (error) {
+    console.error('❌ [Middleware] Database connection error:', error);
     res.status(500).json({
       success: false,
       message: 'Database connection failed',
+      error: (error as Error).message,
     });
   }
 });
