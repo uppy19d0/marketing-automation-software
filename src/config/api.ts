@@ -2,7 +2,7 @@
 const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
 
 export const API_BASE_URL = isDevelopment
-  ? 'http://localhost:5001/api'
+  ? 'http://localhost:5000/api'
   : '/api';
 
 export const API_ENDPOINTS = {
