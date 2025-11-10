@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "jest",
-    "seed:admin": "ts-node src/scripts/seedAdmin.ts"
+    "seed:admin": "ts-node src/scripts/seedAdmin.ts",
+    "verify:user": "ts-node src/scripts/verifyUser.ts"
   },
   "keywords": ["marketing", "automation", "api"],
   "author": "",
