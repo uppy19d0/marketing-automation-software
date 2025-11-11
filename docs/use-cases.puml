@@ -1,0 +1,130 @@
+@startuml Use Cases - Marketing Automation System
+left to right direction
+skinparam packageStyle rectangle
+
+' Actores
+actor "Administrador" as Admin
+actor "Usuario Marketing" as User
+actor "Visitante Web" as Visitor
+
+' Sistema
+rectangle "Sistema de Automatización de Marketing" {
+
+  ' Casos de uso - Gestión de Usuarios
+  package "Gestión de Usuarios" {
+    usecase "Iniciar Sesión" as UC1
+    usecase "Registrarse" as UC2
+    usecase "Gestionar Perfil" as UC3
+    usecase "Cerrar Sesión" as UC4
+  }
+
+  ' Casos de uso - Contactos
+  package "Gestión de Contactos" {
+    usecase "Importar Contactos" as UC5
+    usecase "Crear Contacto" as UC6
+    usecase "Editar Contacto" as UC7
+    usecase "Eliminar Contacto" as UC8
+    usecase "Exportar Contactos" as UC9
+    usecase "Crear Segmento" as UC10
+    usecase "Evaluar Segmento" as UC11
+  }
+
+  ' Casos de uso - Campañas
+  package "Gestión de Campañas" {
+    usecase "Crear Campaña" as UC12
+    usecase "Diseñar Email" as UC13
+    usecase "Programar Envío" as UC14
+    usecase "Enviar Campaña" as UC15
+    usecase "Ver Estadísticas\nCampaña" as UC16
+  }
+
+  ' Casos de uso - Landing Pages
+  package "Landing Pages" {
+    usecase "Crear Landing Page" as UC17
+    usecase "Diseñar Landing" as UC18
+    usecase "Publicar Landing" as UC19
+    usecase "Visitar Landing Page" as UC20
+    usecase "Completar Formulario" as UC21
+    usecase "Ver Métricas Landing" as UC22
+  }
+
+  ' Casos de uso - Automatizaciones
+  package "Automatizaciones" {
+    usecase "Crear Workflow" as UC23
+    usecase "Configurar Trigger" as UC24
+    usecase "Definir Acciones" as UC25
+    usecase "Activar Workflow" as UC26
+    usecase "Ver Ejecuciones" as UC27
+  }
+
+  ' Casos de uso - Analytics
+  package "Analytics y Reportes" {
+    usecase "Ver Dashboard" as UC28
+    usecase "Generar Reporte" as UC29
+    usecase "Exportar Datos" as UC30
+  }
+
+  ' Casos de uso - Administración (solo Admin)
+  package "Administración" {
+    usecase "Gestionar Usuarios" as UC31
+    usecase "Configurar Sistema" as UC32
+    usecase "Ver Logs" as UC33
+  }
+}
+
+' Relaciones Actor - Casos de Uso
+
+' Administrador (puede hacer todo)
+Admin --> UC31
+Admin --> UC32
+Admin --> UC33
+
+' Usuario Marketing
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+User --> UC10
+User --> UC11
+User --> UC12
+User --> UC13
+User --> UC14
+User --> UC15
+User --> UC16
+User --> UC17
+User --> UC18
+User --> UC19
+User --> UC22
+User --> UC23
+User --> UC24
+User --> UC25
+User --> UC26
+User --> UC27
+User --> UC28
+User --> UC29
+User --> UC30
+
+' Visitante Web (solo landing pages)
+Visitor --> UC20
+Visitor --> UC21
+
+' Relaciones entre casos de uso
+
+' Include (dependencias obligatorias)
+UC12 ..> UC13 : <<include>>
+UC15 ..> UC14 : <<include>>
+UC17 ..> UC18 : <<include>>
+UC19 ..> UC18 : <<include>>
+UC23 ..> UC24 : <<include>>
+UC23 ..> UC25 : <<include>>
+
+' Extend (extensiones opcionales)
+UC5 ..> UC10 : <<extend>>
+UC21 ..> UC6 : <<extend>>
+
+@enduml

@@ -1,0 +1,166 @@
+@startuml Process - Campaign Execution
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Proceso 3: Creación y Ejecución de Campañas de Email
+
+actor "Usuario Marketing" as User
+participant "Portal Web" as Portal
+participant "API REST" as API
+participant "Campaign Service" as CampaignSvc
+participant "Template Engine" as TemplateEng
+participant "Scheduler" as Scheduler
+participant "Notifier" as Notifier
+participant "Email Service" as EmailSvc
+database "MongoDB" as DB
+
+== Creación de Campaña ==
+User -> Portal: Crea nueva campaña
+activate Portal
+Portal --> User: Muestra formulario
+User -> Portal: Completa datos:\n- Nombre\n- Asunto\n- Contenido HTML\n- Segmento destino\n- Fecha programada
+Portal -> Portal: Valida formulario
+Portal -> API: POST /api/campaigns\n{name, subject, content, segmentId, scheduledDate}
+activate API
+API -> CampaignSvc: Crea campaña
+activate CampaignSvc
+CampaignSvc -> CampaignSvc: Valida campos requeridos
+CampaignSvc -> DB: INSERT campaign\nstatus: 'draft'
+activate DB
+DB --> CampaignSvc: Campaña creada
+deactivate DB
+CampaignSvc --> API: Campaign + ID
+deactivate CampaignSvc
+API --> Portal: 201 Created {campaign}
+deactivate API
+Portal --> User: Confirma creación\nMuestra preview
+deactivate Portal
+
+== Programación de Envío ==
+User -> Portal: Programa/Envía campaña
+activate Portal
+Portal -> API: POST /api/campaigns/:id/send
+activate API
+API -> CampaignSvc: Valida campaña
+activate CampaignSvc
+CampaignSvc -> DB: Lee campaña + segmento
+activate DB
+DB --> CampaignSvc: {campaign, segment}
+deactivate DB
+
+CampaignSvc -> CampaignSvc: Valida:\n- Tiene destinatarios\n- Contenido completo\n- No enviada previamente
+
+alt Envío inmediato
+    CampaignSvc -> CampaignSvc: scheduledDate = now
+else Envío programado
+    CampaignSvc -> CampaignSvc: Valida fecha futura
+end
+
+CampaignSvc -> DB: UPDATE campaign\nstatus: 'scheduled'
+activate DB
+DB --> CampaignSvc: Actualizada
+deactivate DB
+
+CampaignSvc -> Scheduler: Registra job\n{campaignId, executionDate}
+activate Scheduler
+Scheduler --> CampaignSvc: Job ID
+deactivate Scheduler
+
+CampaignSvc --> API: Campaña programada
+deactivate CampaignSvc
+API --> Portal: 200 OK {campaign}
+deactivate API
+Portal --> User: Confirma programación
+deactivate Portal
+
+== Ejecución de Envío (Automatizada) ==
+Scheduler -> Scheduler: Llegó fecha programada
+activate Scheduler
+Scheduler -> CampaignSvc: Ejecuta campaña
+activate CampaignSvc
+
+CampaignSvc -> DB: Lee campaña + segmento
+activate DB
+DB --> CampaignSvc: {campaign, segment}
+deactivate DB
+
+CampaignSvc -> DB: Query contactos del segmento
+activate DB
+DB --> CampaignSvc: Lista contactos (emails)
+deactivate DB
+
+CampaignSvc -> CampaignSvc: Actualiza status:\n'sending'
+CampaignSvc -> DB: UPDATE campaign status
+activate DB
+DB --> CampaignSvc: OK
+deactivate DB
+
+loop Para cada contacto
+    CampaignSvc -> TemplateEng: Renderiza email\n{template, contactData}
+    activate TemplateEng
+    TemplateEng -> TemplateEng: Reemplaza variables:\n{{nombre}}, {{empresa}}, etc.
+    TemplateEng -> TemplateEng: Inserta tracking pixels\n(aperturas, clicks)
+    TemplateEng --> CampaignSvc: HTML final personalizado
+    deactivate TemplateEng
+
+    CampaignSvc -> Notifier: Encola mensaje
+    activate Notifier
+    Notifier -> EmailSvc: Envía email SMTP
+    activate EmailSvc
+    EmailSvc -> EmailSvc: Conecta SMTP server
+    EmailSvc --> Notifier: Resultado envío\n(success/error)
+    deactivate EmailSvc
+
+    alt Envío exitoso
+        Notifier -> DB: Registra log envío\n{contactId, sentAt, status: 'sent'}
+        activate DB
+        DB --> Notifier: OK
+        deactivate DB
+    else Error SMTP
+        Notifier -> DB: Registra error\n{contactId, error, status: 'failed'}
+        activate DB
+        DB --> Notifier: OK
+        deactivate DB
+    end
+    deactivate Notifier
+end
+
+CampaignSvc -> DB: UPDATE campaign\nstatus: 'sent'\nsentAt: now\ntotalSent: count
+activate DB
+DB --> CampaignSvc: OK
+deactivate DB
+
+CampaignSvc --> Scheduler: Ejecución completada
+deactivate CampaignSvc
+deactivate Scheduler
+
+== Seguimiento de Resultados ==
+User -> Portal: Visualiza estadísticas
+activate Portal
+Portal -> API: GET /api/campaigns/:id/stats
+activate API
+API -> DB: Query analytics\n{opens, clicks, bounces}
+activate DB
+DB --> API: Estadísticas
+deactivate DB
+API --> Portal: 200 OK {stats}
+deactivate API
+Portal --> User: Muestra dashboard:\n- Tasa apertura\n- Tasa clicks\n- Conversiones
+deactivate Portal
+
+note right of TemplateEng
+  Personalización:
+  - Variables dinámicas
+  - Contenido condicional
+  - Tracking URLs
+  - Pixel 1x1 para aperturas
+end note
+
+note right of Notifier
+  Queue system para:
+  - Evitar rate limits SMTP
+  - Reintentos automáticos
+  - Procesamiento asíncrono
+end note
+
+@enduml

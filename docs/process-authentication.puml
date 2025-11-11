@@ -1,0 +1,90 @@
+@startuml Process - Authentication
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Proceso 1: Autenticación y Gestión de Usuarios
+
+actor "Usuario" as User
+participant "Portal Web" as Portal
+participant "API REST" as API
+participant "Auth Service" as Auth
+database "MongoDB" as DB
+
+== Registro de Usuario ==
+User -> Portal: Ingresa datos registro
+activate Portal
+Portal -> Portal: Valida formulario
+Portal -> API: POST /api/auth/register
+activate API
+API -> Auth: Procesa registro
+activate Auth
+Auth -> Auth: Valida datos únicos\n(email no existe)
+Auth -> Auth: Hash password\n(bcrypt)
+Auth -> DB: Crea documento User
+activate DB
+DB --> Auth: Usuario creado
+deactivate DB
+Auth -> Auth: Genera JWT token
+Auth --> API: Token + datos usuario
+deactivate Auth
+API --> Portal: 201 Created\n{token, user}
+deactivate API
+Portal -> Portal: Guarda token\n(localStorage)
+Portal --> User: Redirige a Dashboard
+deactivate Portal
+
+== Login ==
+User -> Portal: Ingresa credenciales
+activate Portal
+Portal -> API: POST /api/auth/login
+activate API
+API -> Auth: Valida credenciales
+activate Auth
+Auth -> DB: Busca usuario por email
+activate DB
+DB --> Auth: Datos usuario
+deactivate DB
+Auth -> Auth: Compara password\n(bcrypt.compare)
+alt Credenciales válidas
+    Auth -> Auth: Genera JWT token
+    Auth --> API: Token + datos usuario
+    API --> Portal: 200 OK\n{token, user}
+    Portal -> Portal: Guarda token
+    Portal --> User: Redirige a Dashboard
+else Credenciales inválidas
+    Auth --> API: Error 401
+    API --> Portal: 401 Unauthorized
+    Portal --> User: Muestra error
+end
+deactivate Auth
+deactivate API
+deactivate Portal
+
+== Verificación de Sesión ==
+User -> Portal: Accede a página protegida
+activate Portal
+Portal -> Portal: Lee token de\nlocalStorage
+Portal -> API: GET /api/auth/me\nHeader: Bearer token
+activate API
+API -> Auth: Verifica JWT
+activate Auth
+Auth -> Auth: Decodifica token\nVerifica expiración
+alt Token válido
+    Auth -> DB: Busca usuario por ID
+    activate DB
+    DB --> Auth: Datos usuario
+    deactivate DB
+    Auth --> API: Datos usuario
+    API --> Portal: 200 OK {user}
+    Portal --> User: Muestra contenido
+else Token inválido/expirado
+    Auth --> API: Error 401
+    API --> Portal: 401 Unauthorized
+    Portal -> Portal: Elimina token
+    Portal --> User: Redirige a Login
+end
+deactivate Auth
+deactivate API
+deactivate Portal
+
+@enduml

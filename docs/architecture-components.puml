@@ -1,0 +1,129 @@
+@startuml Architecture Components
+!define RECTANGLE class
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam component {
+    BackgroundColor<<frontend>> LightBlue
+    BackgroundColor<<backend>> LightGreen
+    BackgroundColor<<database>> LightYellow
+    BackgroundColor<<external>> LightPink
+}
+
+' Actors
+actor "Administrador" as Admin
+actor "Usuario Marketing" as User
+actor "Visitante Web" as Visitor
+
+' Frontend Components
+package "Frontend (React + TypeScript)" <<frontend>> {
+    component "Portal Web" as Portal {
+        [Dashboard]
+        [Gestión Contactos]
+        [Campañas]
+        [Landing Pages]
+        [Segmentos]
+        [Automatizaciones]
+        [Analytics]
+    }
+}
+
+' Backend Components
+package "Backend (Node.js + Express)" <<backend>> {
+    component "API REST" as API {
+        [Auth Service]
+        [Contact Service]
+        [Campaign Service]
+        [Segment Service]
+        [Landing Page Service]
+        [Automation Service]
+    }
+
+    component "Motor de Reglas" as RulesEngine {
+        [Evaluador Segmentos]
+        [Procesador Workflows]
+    }
+
+    component "Programador de Tareas" as Scheduler {
+        [Cron Jobs]
+        [Queue Manager]
+    }
+
+    component "Motor de Plantillas" as TemplateEngine {
+        [Email Templates]
+        [Landing Templates]
+    }
+
+    component "Notificador" as Notifier {
+        [Email Service]
+        [SMS Service]
+    }
+}
+
+' Database
+package "Persistencia" <<database>> {
+    database "MongoDB" as DB {
+        [Users]
+        [Contacts]
+        [Campaigns]
+        [Segments]
+        [Landing Pages]
+        [Workflows]
+        [Analytics]
+    }
+}
+
+' External Services
+package "Servicios Externos" <<external>> {
+    component "SMTP Server" as SMTP
+    component "SMS Gateway" as SMS
+    component "CDN/Storage" as CDN
+}
+
+' Relationships - Actors to Frontend
+Admin --> Portal : Gestiona sistema
+User --> Portal : Crea campañas
+Visitor --> [Landing Pages] : Completa formularios
+
+' Frontend to Backend
+Portal --> API : HTTP/REST (JSON)
+
+' Backend Internal
+API --> RulesEngine : Evalúa condiciones
+API --> Scheduler : Programa envíos
+API --> TemplateEngine : Renderiza contenido
+API --> Notifier : Envía mensajes
+API --> DB : CRUD operations
+
+Scheduler --> RulesEngine : Ejecuta workflows
+Scheduler --> Notifier : Dispara envíos programados
+
+RulesEngine --> DB : Lee reglas/criterios
+TemplateEngine --> DB : Lee plantillas
+Notifier --> DB : Registra envíos
+
+' Backend to External
+Notifier --> SMTP : Envía emails
+Notifier --> SMS : Envía SMS
+Portal --> CDN : Carga assets/imágenes
+
+' Notes
+note right of API
+  Todas las operaciones
+  requieren autenticación
+  JWT Bearer Token
+end note
+
+note right of RulesEngine
+  Evalúa reglas dinámicas
+  para segmentación y
+  workflows automatizados
+end note
+
+note bottom of DB
+  Base de datos NoSQL
+  Schemas flexibles con
+  Mongoose ODM
+end note
+
+@enduml

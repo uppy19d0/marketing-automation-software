@@ -1,0 +1,204 @@
+@startuml Process - Automation Workflows
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Proceso 5: Automatizaciones y Workflows
+
+actor "Usuario Marketing" as User
+participant "Portal Web" as Portal
+participant "API REST" as API
+participant "Workflow Service" as WorkflowSvc
+participant "Rules Engine" as RulesEngine
+participant "Scheduler" as Scheduler
+participant "Notifier" as Notifier
+database "MongoDB" as DB
+
+== Creación de Workflow Automatizado ==
+User -> Portal: Crea nuevo workflow
+activate Portal
+Portal --> User: Muestra editor visual\n(drag & drop)
+
+User -> Portal: Define workflow:\n- Trigger (evento disparador)\n- Condiciones/reglas\n- Acciones a ejecutar\n- Delays/esperas
+
+Portal -> Portal: Valida flujo:\n- Trigger definido\n- Al menos 1 acción\n- No ciclos infinitos
+
+User -> Portal: Activa workflow
+Portal -> API: POST /api/workflows\n{name, trigger, conditions, actions, isActive:true}
+activate API
+API -> WorkflowSvc: Crea workflow
+activate WorkflowSvc
+WorkflowSvc -> WorkflowSvc: Valida estructura:\n- Trigger válido\n- Condiciones sintaxis OK\n- Acciones soportadas
+WorkflowSvc -> DB: INSERT workflow
+activate DB
+DB --> WorkflowSvc: Workflow creado
+deactivate DB
+WorkflowSvc -> WorkflowSvc: Registra listeners\npara el trigger
+WorkflowSvc --> API: Workflow + ID
+deactivate WorkflowSvc
+API --> Portal: 201 Created {workflow}
+deactivate API
+Portal --> User: Confirma activación\nWorkflow ejecutándose
+deactivate Portal
+
+== Ejemplo: Workflow de Bienvenida ==
+note over User
+  **Workflow definido:**
+  Trigger: Nuevo contacto creado
+  Condición: source = 'landing-page'
+  Acciones:
+    1. Esperar 5 minutos
+    2. Enviar email bienvenida
+    3. Esperar 24 horas
+    4. Enviar email seguimiento
+    5. Añadir tag "onboarding-complete"
+end note
+
+== Ejecución de Workflow (Disparado por Evento) ==
+DB -> WorkflowSvc: Event emitido:\n'contact.created'
+activate WorkflowSvc
+WorkflowSvc -> DB: Query workflows activos\ncon trigger: 'contact.created'
+activate DB
+DB --> WorkflowSvc: Lista workflows
+deactivate DB
+
+loop Para cada workflow aplicable
+    WorkflowSvc -> RulesEngine: Evalúa condiciones\n{contactData, conditions}
+    activate RulesEngine
+    RulesEngine -> RulesEngine: Evalúa reglas:\nsource = 'landing-page'?
+
+    alt Condiciones cumplen
+        RulesEngine --> WorkflowSvc: true
+        WorkflowSvc -> DB: Crea workflow instance\n{workflowId, contactId, status:'running'}
+        activate DB
+        DB --> WorkflowSvc: Instance ID
+        deactivate DB
+
+        WorkflowSvc -> Scheduler: Programa primera acción\n{instanceId, action, delay}
+        activate Scheduler
+        Scheduler --> WorkflowSvc: Job scheduled
+        deactivate Scheduler
+
+    else Condiciones no cumplen
+        RulesEngine --> WorkflowSvc: false
+        WorkflowSvc -> WorkflowSvc: Skip workflow
+    end
+    deactivate RulesEngine
+end
+deactivate WorkflowSvc
+
+== Ejecución de Acciones (Automatizada) ==
+Scheduler -> Scheduler: Llegó momento de\nejecutar acción
+activate Scheduler
+Scheduler -> WorkflowSvc: Ejecuta acción\n{instanceId, actionIndex}
+activate WorkflowSvc
+
+WorkflowSvc -> DB: Lee workflow instance\ny datos de contacto
+activate DB
+DB --> WorkflowSvc: {instance, contact, workflow}
+deactivate DB
+
+WorkflowSvc -> WorkflowSvc: Lee acción actual:\naction = "send_email"
+
+alt Acción: Enviar Email
+    WorkflowSvc -> Notifier: Envía email\n{contactId, templateId}
+    activate Notifier
+    Notifier -> Notifier: Renderiza plantilla\ncon datos contacto
+    Notifier -> Notifier: Envía vía SMTP
+    Notifier --> WorkflowSvc: Email enviado
+    deactivate Notifier
+
+    WorkflowSvc -> DB: Log acción ejecutada\n{instanceId, action:'send_email', status:'completed'}
+    activate DB
+    DB --> WorkflowSvc: OK
+    deactivate DB
+
+else Acción: Añadir Tag
+    WorkflowSvc -> DB: UPDATE contact\nadd tag to array
+    activate DB
+    DB --> WorkflowSvc: Contact actualizado
+    deactivate DB
+
+else Acción: Cambiar Segmento
+    WorkflowSvc -> DB: UPDATE contact.segment
+    activate DB
+    DB --> WorkflowSvc: Contact actualizado
+    deactivate DB
+
+else Acción: Webhook HTTP
+    WorkflowSvc -> WorkflowSvc: HTTP POST a URL externa\n{contactData}
+    WorkflowSvc -> WorkflowSvc: Registra respuesta
+
+else Acción: Esperar (Wait)
+    WorkflowSvc -> WorkflowSvc: No-op\n(delay ya gestionado)
+end
+
+WorkflowSvc -> WorkflowSvc: ¿Hay siguiente acción?
+
+alt Hay más acciones
+    WorkflowSvc -> WorkflowSvc: Lee siguiente acción\ny su delay
+    WorkflowSvc -> Scheduler: Programa siguiente\n{instanceId, nextAction, delay}
+    activate Scheduler
+    Scheduler --> WorkflowSvc: Scheduled
+    deactivate Scheduler
+    WorkflowSvc -> DB: UPDATE instance\ncurrentStep++\nstatus: 'waiting'
+    activate DB
+    DB --> WorkflowSvc: OK
+    deactivate DB
+
+else Workflow completado
+    WorkflowSvc -> DB: UPDATE instance\nstatus: 'completed'\ncompletedAt: now
+    activate DB
+    DB --> WorkflowSvc: OK
+    deactivate DB
+end
+
+WorkflowSvc --> Scheduler: Acción ejecutada
+deactivate WorkflowSvc
+deactivate Scheduler
+
+== Monitoreo y Análisis ==
+User -> Portal: Visualiza métricas workflow
+activate Portal
+Portal -> API: GET /api/workflows/:id/stats
+activate API
+API -> DB: Query workflow instances
+activate DB
+DB --> API: {totalExecuted, completed,\nfailed, avgDuration}
+deactivate DB
+API --> Portal: 200 OK {stats}
+deactivate API
+Portal --> User: Dashboard:\n- Ejecuciones totales\n- Tasa completado\n- Contactos impactados\n- Performance por paso
+deactivate Portal
+
+note right of RulesEngine
+  Tipos de condiciones:
+  - Campos contacto
+  - Tags
+  - Segmentos
+  - Interacciones previas
+  - Campos personalizados
+  - Operadores: =, !=, >,
+    <, contains, in, etc.
+end note
+
+note right of Scheduler
+  Delays soportados:
+  - Minutos
+  - Horas
+  - Días
+  - Hasta evento específico
+  - Hasta fecha/hora
+end note
+
+note right of WorkflowSvc
+  Triggers comunes:
+  - Contact created
+  - Contact updated
+  - Tag added
+  - Campaign opened
+  - Link clicked
+  - Form submitted
+  - Date/time (cron)
+end note
+
+@enduml

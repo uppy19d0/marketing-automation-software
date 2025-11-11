@@ -1,0 +1,107 @@
+@startuml Process - Contact Management
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Proceso 2: Gestión de Contactos (Importación y Organización)
+
+actor "Usuario Marketing" as User
+participant "Portal Web" as Portal
+participant "API REST" as API
+participant "Contact Service" as ContactSvc
+participant "Segment Service" as SegmentSvc
+database "MongoDB" as DB
+
+== Importación de Contactos (CSV) ==
+User -> Portal: Selecciona archivo CSV
+activate Portal
+Portal -> Portal: Valida formato\n(headers, encoding)
+Portal -> Portal: Parsea CSV\nGenera preview
+Portal --> User: Muestra preview\n(primeras 5 filas)
+User -> Portal: Confirma importación\nMapea campos
+Portal -> API: POST /api/contacts/import\n{file, fieldMapping}
+activate API
+API -> ContactSvc: Procesa importación
+activate ContactSvc
+ContactSvc -> ContactSvc: Valida cada fila\n(email válido, campos requeridos)
+
+loop Para cada contacto válido
+    ContactSvc -> DB: Busca por email
+    activate DB
+    DB --> ContactSvc: Contacto existente o null
+    deactivate DB
+
+    alt Contacto existe
+        ContactSvc -> ContactSvc: Decide estrategia:\nactualizar/ignorar/duplicar
+        ContactSvc -> DB: UPDATE contact
+        activate DB
+        DB --> ContactSvc: Contacto actualizado
+        deactivate DB
+    else Contacto nuevo
+        ContactSvc -> DB: INSERT contact
+        activate DB
+        DB --> ContactSvc: Contacto creado
+        deactivate DB
+    end
+end
+
+ContactSvc --> API: Reporte importación\n{total, created, updated, errors}
+deactivate ContactSvc
+API --> Portal: 200 OK {importReport}
+deactivate API
+Portal --> User: Muestra resumen\nimportación
+deactivate Portal
+
+== Segmentación Dinámica ==
+User -> Portal: Crea nuevo segmento\nDefine reglas/filtros
+activate Portal
+Portal -> API: POST /api/segments\n{name, rules}
+activate API
+API -> SegmentSvc: Crea segmento
+activate SegmentSvc
+SegmentSvc -> SegmentSvc: Valida reglas\n(sintaxis, campos válidos)
+SegmentSvc -> DB: Guarda segmento
+activate DB
+DB --> SegmentSvc: Segmento creado
+deactivate DB
+SegmentSvc --> API: Segmento + ID
+deactivate SegmentSvc
+API --> Portal: 201 Created {segment}
+deactivate API
+Portal --> User: Confirma creación
+deactivate Portal
+
+== Evaluación de Segmento ==
+User -> Portal: Solicita contactos\nde un segmento
+activate Portal
+Portal -> API: GET /api/segments/:id/contacts
+activate API
+API -> SegmentSvc: Evalúa reglas
+activate SegmentSvc
+SegmentSvc -> DB: Lee reglas del segmento
+activate DB
+DB --> SegmentSvc: {rules}
+deactivate DB
+
+SegmentSvc -> SegmentSvc: Construye query MongoDB\n(criterios dinámicos)
+
+SegmentSvc -> DB: Query contacts\ncon filtros aplicados
+activate DB
+DB --> SegmentSvc: Lista contactos\nque cumplen reglas
+deactivate DB
+
+SegmentSvc --> API: Contactos filtrados
+deactivate SegmentSvc
+API --> Portal: 200 OK {contacts}
+deactivate API
+Portal --> User: Muestra tabla contactos\n+ total count
+deactivate Portal
+
+note right of SegmentSvc
+  Reglas ejemplo:
+  - email contains "@gmail.com"
+  - tags includes "cliente"
+  - lastInteraction > "2024-01-01"
+  - customFields.industry = "tech"
+end note
+
+@enduml

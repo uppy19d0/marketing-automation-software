@@ -1,0 +1,189 @@
+@startuml Process - Landing Pages
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Proceso 4: Creación y Publicación de Landing Pages
+
+actor "Usuario Marketing" as User
+actor "Visitante Web" as Visitor
+participant "Portal Web" as Portal
+participant "Landing Page Builder" as Builder
+participant "API REST" as API
+participant "Landing Service" as LandingSvc
+participant "Contact Service" as ContactSvc
+database "MongoDB" as DB
+
+== Creación de Landing Page ==
+User -> Portal: Nueva Landing Page
+activate Portal
+Portal -> Builder: Abre editor visual
+activate Builder
+Builder --> User: Muestra formulario diseño
+
+User -> Builder: Configura landing:\n- Título y descripción\n- Campos formulario\n- Estilos (colores, layout)\n- SEO metadata\n- GDPR consent
+
+Builder -> Builder: Preview en tiempo real
+
+User -> Builder: Guarda como borrador
+Builder -> API: POST /api/landing-pages\n{name, content, styling, formFields, status:'draft'}
+activate API
+API -> LandingSvc: Crea landing page
+activate LandingSvc
+LandingSvc -> LandingSvc: Genera slug único\n(name -> url-friendly)
+LandingSvc -> LandingSvc: Valida configuración:\n- Campos requeridos\n- Estilos válidos\n- Slug no duplicado
+LandingSvc -> DB: INSERT landing page
+activate DB
+DB --> LandingSvc: Landing creada
+deactivate DB
+LandingSvc --> API: Landing + ID + slug
+deactivate LandingSvc
+API --> Builder: 201 Created {landing}
+deactivate API
+Builder --> User: Confirma guardado\nMuestra URL preview
+deactivate Builder
+deactivate Portal
+
+== Publicación ==
+User -> Portal: Publica landing page
+activate Portal
+Portal -> API: POST /api/landing-pages/:id/publish
+activate API
+API -> LandingSvc: Valida y publica
+activate LandingSvc
+LandingSvc -> DB: Lee landing page
+activate DB
+DB --> LandingSvc: {landing}
+deactivate DB
+
+LandingSvc -> LandingSvc: Valida:\n- Tiene título\n- Tiene formulario\n- Tiene CTA button\n- SEO metadata completo
+
+alt Validación exitosa
+    LandingSvc -> DB: UPDATE landing\nstatus: 'published'\npublishedAt: now
+    activate DB
+    DB --> LandingSvc: Actualizada
+    deactivate DB
+    LandingSvc --> API: Landing publicada\n{url, publishedAt}
+    API --> Portal: 200 OK {landing}
+    Portal --> User: Muestra URL pública:\n/lp/{slug}
+else Validación falla
+    LandingSvc --> API: Error 400\n{validationErrors}
+    API --> Portal: 400 Bad Request
+    Portal --> User: Muestra errores\na corregir
+end
+deactivate LandingSvc
+deactivate API
+deactivate Portal
+
+== Visita de Usuario Externo ==
+Visitor -> Portal: Accede a /lp/{slug}
+activate Portal
+Portal -> API: GET /api/landing-pages/{slug}
+activate API
+API -> LandingSvc: Busca por slug
+activate LandingSvc
+LandingSvc -> DB: Query landing page\nstatus: 'published'
+activate DB
+DB --> LandingSvc: {landing} o null
+deactivate DB
+
+alt Landing existe y publicada
+    LandingSvc -> DB: Incrementa stats.visits
+    activate DB
+    DB --> LandingSvc: OK
+    deactivate DB
+    LandingSvc --> API: Landing page data
+    API --> Portal: 200 OK {landing}
+    Portal -> Portal: Renderiza landing:\n- Aplica estilos custom\n- Genera formulario dinámico\n- Inserta SEO tags
+    Portal --> Visitor: Muestra landing page
+else Landing no encontrada
+    LandingSvc --> API: Error 404
+    API --> Portal: 404 Not Found
+    Portal --> Visitor: Página no encontrada
+end
+deactivate LandingSvc
+deactivate API
+
+== Conversión (Envío de Formulario) ==
+Visitor -> Portal: Completa formulario\nAcepta GDPR
+activate Portal
+Portal -> Portal: Valida campos:\n- Email formato válido\n- Campos requeridos\n- GDPR aceptado
+
+Portal -> API: POST /api/landing-pages/{slug}/submit\n{formData, gdprConsent}
+activate API
+API -> LandingSvc: Procesa submission
+activate LandingSvc
+
+LandingSvc -> LandingSvc: Valida datos recibidos
+
+LandingSvc -> ContactSvc: Crea/actualiza contacto
+activate ContactSvc
+ContactSvc -> DB: Busca contacto por email
+activate DB
+DB --> ContactSvc: Contacto existente o null
+deactivate DB
+
+alt Contacto existe
+    ContactSvc -> DB: UPDATE contact\nañade tags: [landingPageName]\nactualiza customFields
+    activate DB
+    DB --> ContactSvc: Actualizado
+    deactivate DB
+else Contacto nuevo
+    ContactSvc -> DB: INSERT contact\ntags: [landingPageName]\nsource: 'landing-page'
+    activate DB
+    DB --> ContactSvc: Creado
+    deactivate DB
+end
+ContactSvc --> LandingSvc: Contacto ID
+deactivate ContactSvc
+
+LandingSvc -> DB: Incrementa stats.submissions\nActualiza conversionRate
+activate DB
+DB --> LandingSvc: OK
+deactivate DB
+
+LandingSvc -> DB: Registra evento conversión\n{landingPageId, contactId, timestamp}
+activate DB
+DB --> LandingSvc: OK
+deactivate DB
+
+LandingSvc --> API: Submission procesada
+deactivate LandingSvc
+API --> Portal: 200 OK {success: true}
+deactivate API
+
+Portal -> Portal: Muestra página éxito\ncon successMessage
+Portal --> Visitor: "¡Gracias! Revisa tu email"
+deactivate Portal
+
+== Análisis de Rendimiento ==
+User -> Portal: Visualiza métricas landing
+activate Portal
+Portal -> API: GET /api/landing-pages/:id/stats
+activate API
+API -> DB: Query analytics
+activate DB
+DB --> API: {visits, submissions,\nconversionRate, bounceRate,\navgTimeOnPage}
+deactivate DB
+API --> Portal: 200 OK {stats}
+deactivate API
+Portal --> User: Dashboard con:\n- Total visitas\n- Conversiones\n- Tasa conversión %\n- Gráficas temporales
+deactivate Portal
+
+note right of LandingSvc
+  Slug generation:
+  "Mi Landing Page" →
+  "mi-landing-page"
+
+  Si existe, añade número:
+  "mi-landing-page-2"
+end note
+
+note right of ContactSvc
+  Auto-tagging:
+  Contactos tienen tag
+  con nombre de landing
+  para segmentación
+  posterior
+end note
+
+@enduml

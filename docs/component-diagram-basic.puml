@@ -1,0 +1,76 @@
+@startuml Component Diagram - Basic
+!define RECTANGLE class
+
+skinparam componentStyle rectangle
+
+' Frontend
+package "Capa de Presentación" {
+    [Interfaz Web\n(React)] as Frontend
+}
+
+' Backend
+package "Capa de Lógica de Negocio" {
+    [API REST] as API
+    [Servicio de Autenticación] as AuthService
+    [Servicio de Contactos] as ContactService
+    [Servicio de Campañas] as CampaignService
+    [Servicio de Landing Pages] as LandingService
+    [Servicio de Automatizaciones] as WorkflowService
+    [Servicio de Analytics] as AnalyticsService
+}
+
+' Utilities
+package "Capa de Utilidades" {
+    [Motor de Plantillas] as TemplateEngine
+    [Programador de Tareas] as Scheduler
+    [Sistema de Notificaciones] as Notifier
+}
+
+' Database
+package "Capa de Persistencia" {
+    database "Base de Datos\n(MongoDB)" as DB
+}
+
+' External
+package "Servicios Externos" {
+    [Servidor SMTP] as SMTP
+    [Gateway SMS] as SMS
+}
+
+' Relaciones Frontend -> Backend
+Frontend --> API : HTTP/REST
+
+' Relaciones API -> Servicios
+API --> AuthService
+API --> ContactService
+API --> CampaignService
+API --> LandingService
+API --> WorkflowService
+API --> AnalyticsService
+
+' Relaciones Servicios -> Utilidades
+CampaignService --> TemplateEngine
+CampaignService --> Scheduler
+CampaignService --> Notifier
+
+LandingService --> TemplateEngine
+
+WorkflowService --> Scheduler
+WorkflowService --> Notifier
+
+' Relaciones Servicios -> DB
+AuthService --> DB
+ContactService --> DB
+CampaignService --> DB
+LandingService --> DB
+WorkflowService --> DB
+AnalyticsService --> DB
+
+' Relaciones Utilidades -> DB
+Scheduler --> DB
+
+' Relaciones Utilidades -> Externos
+Notifier --> SMTP
+Notifier --> SMS
+
+@enduml

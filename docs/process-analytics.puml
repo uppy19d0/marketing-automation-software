@@ -1,0 +1,216 @@
+@startuml Process - Analytics and Tracking
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+title Proceso 6: Analytics y Seguimiento de Métricas
+
+actor "Usuario Marketing" as User
+actor "Destinatario Email" as Recipient
+participant "Email Client" as EmailClient
+participant "Tracking Server" as Tracking
+participant "API REST" as API
+participant "Analytics Service" as AnalyticsSvc
+database "MongoDB" as DB
+participant "Portal Web" as Portal
+
+== Registro de Apertura de Email ==
+Recipient -> EmailClient: Abre email de campaña
+activate EmailClient
+EmailClient -> EmailClient: Renderiza HTML
+EmailClient -> Tracking: GET /track/open/{trackingId}.png\n(pixel 1x1 transparente)
+activate Tracking
+Tracking -> Tracking: Extrae tracking ID\nParsea User-Agent
+
+Tracking -> API: POST /api/analytics/email-open\n{trackingId, userAgent, timestamp}
+activate API
+API -> AnalyticsSvc: Registra apertura
+activate AnalyticsSvc
+AnalyticsSvc -> DB: Decodifica trackingId →\n{campaignId, contactId}
+activate DB
+DB --> AnalyticsSvc: IDs
+deactivate DB
+
+AnalyticsSvc -> DB: Query si ya registrada\n(evitar duplicados mismo día)
+activate DB
+DB --> AnalyticsSvc: isFirstOpen: boolean
+deactivate DB
+
+alt Primera apertura
+    AnalyticsSvc -> DB: INSERT email_event\n{type:'open', campaignId,\ncontactId, timestamp}
+    activate DB
+    DB --> AnalyticsSvc: Evento creado
+    deactivate DB
+
+    AnalyticsSvc -> DB: INCREMENT campaign.stats.opens\nINCREMENT contact.stats.opens
+    activate DB
+    DB --> AnalyticsSvc: Stats actualizados
+    deactivate DB
+
+    AnalyticsSvc -> DB: UPDATE contact.lastInteraction = now
+    activate DB
+    DB --> AnalyticsSvc: OK
+    deactivate DB
+else Apertura repetida
+    AnalyticsSvc -> AnalyticsSvc: Log como re-open\n(no cuenta en unique opens)
+end
+
+AnalyticsSvc --> API: Registrado
+deactivate AnalyticsSvc
+API --> Tracking: 200 OK
+deactivate API
+Tracking --> EmailClient: Imagen 1x1 PNG
+deactivate Tracking
+deactivate EmailClient
+
+== Registro de Click en Link ==
+Recipient -> EmailClient: Click en link de campaña
+activate EmailClient
+EmailClient -> Tracking: GET /track/click/{linkId}?url={originalUrl}
+activate Tracking
+Tracking -> API: POST /api/analytics/link-click\n{linkId, referer, timestamp}
+activate API
+API -> AnalyticsSvc: Registra click
+activate AnalyticsSvc
+AnalyticsSvc -> DB: Decodifica linkId →\n{campaignId, contactId, urlIndex}
+activate DB
+DB --> AnalyticsSvc: IDs + URL original
+deactivate DB
+
+AnalyticsSvc -> DB: INSERT email_event\n{type:'click', campaignId,\ncontactId, url, timestamp}
+activate DB
+DB --> AnalyticsSvc: Evento creado
+deactivate DB
+
+AnalyticsSvc -> DB: INCREMENT campaign.stats.clicks\nINCREMENT link.clickCount
+activate DB
+DB --> AnalyticsSvc: Stats actualizados
+deactivate DB
+
+AnalyticsSvc -> DB: UPDATE contact\nlastInteraction = now\nengagementScore += 5
+activate DB
+DB --> AnalyticsSvc: OK
+deactivate DB
+
+AnalyticsSvc --> API: Registrado + redirect URL
+deactivate AnalyticsSvc
+API --> Tracking: 302 Redirect\nLocation: {originalUrl}
+deactivate API
+Tracking --> EmailClient: Redirige a destino final
+deactivate Tracking
+EmailClient -> EmailClient: Navega a URL original
+deactivate EmailClient
+
+== Agregación de Métricas (Proceso Background) ==
+Scheduler -> AnalyticsSvc: Cron job diario:\nAgrega estadísticas
+activate AnalyticsSvc
+
+AnalyticsSvc -> DB: Query eventos últimas 24h
+activate DB
+DB --> AnalyticsSvc: Lista eventos
+deactivate DB
+
+AnalyticsSvc -> AnalyticsSvc: Calcula métricas:\n- Total opens\n- Unique opens\n- Total clicks\n- Unique clicks\n- CTR (Click-Through Rate)\n- Open rate\n- Bounce rate\n- Unsubscribes
+
+loop Para cada campaña
+    AnalyticsSvc -> AnalyticsSvc: Calcula:\nopenRate = (unique opens / sent) × 100\nCTR = (unique clicks / unique opens) × 100
+
+    AnalyticsSvc -> DB: UPDATE campaign.stats\n{openRate, CTR, lastCalculated}
+    activate DB
+    DB --> AnalyticsSvc: OK
+    deactivate DB
+end
+
+loop Para cada contacto
+    AnalyticsSvc -> AnalyticsSvc: Calcula:\nengagementScore basado en:\n- Aperturas recientes\n- Clicks recientes\n- Conversiones\n- Tiempo desde última interacción
+
+    AnalyticsSvc -> DB: UPDATE contact.engagementScore
+    activate DB
+    DB --> AnalyticsSvc: OK
+    deactivate DB
+end
+
+AnalyticsSvc -> DB: INSERT daily_aggregate\n{date, totalSent, totalOpens,\ntotalClicks, revenue}
+activate DB
+DB --> AnalyticsSvc: Agregado guardado
+deactivate DB
+deactivate AnalyticsSvc
+
+== Visualización de Dashboard ==
+User -> Portal: Accede a Analytics
+activate Portal
+Portal -> API: GET /api/analytics/dashboard?period=30d
+activate API
+API -> AnalyticsSvc: Genera dashboard data
+activate AnalyticsSvc
+
+AnalyticsSvc -> DB: Query agregados período\n+ campaigns + contacts
+activate DB
+DB --> AnalyticsSvc: Datos para dashboard
+deactivate DB
+
+AnalyticsSvc -> AnalyticsSvc: Calcula KPIs:\n- Total contactos\n- Crecimiento contactos\n- Campañas enviadas\n- Tasa apertura promedio\n- Tasa click promedio\n- Contactos más engaged\n- Mejores campañas
+
+AnalyticsSvc -> AnalyticsSvc: Genera series temporales:\n- Opens por día\n- Clicks por día\n- Nuevos contactos por día
+
+AnalyticsSvc --> API: Dashboard data\n{kpis, timeSeries, topCampaigns}
+deactivate AnalyticsSvc
+API --> Portal: 200 OK {dashboardData}
+deactivate API
+
+Portal -> Portal: Renderiza gráficas:\n- Line charts\n- Bar charts\n- Pie charts\n- Tablas ranking
+
+Portal --> User: Muestra dashboard\ncon métricas actualizadas
+deactivate Portal
+
+== Generación de Reportes ==
+User -> Portal: Solicita reporte\nCampaña específica
+activate Portal
+Portal -> API: GET /api/campaigns/:id/report?format=pdf
+activate API
+API -> AnalyticsSvc: Genera reporte
+activate AnalyticsSvc
+
+AnalyticsSvc -> DB: Query todos los datos:\n- Campaign info\n- Email events\n- Stats agregadas\n- Top links clicked\n- Distribución geográfica
+activate DB
+DB --> AnalyticsSvc: Datos completos
+deactivate DB
+
+AnalyticsSvc -> AnalyticsSvc: Genera documento:\n- Header con info campaña\n- Métricas clave\n- Gráficas performance\n- Tabla top contactos\n- Insights y recomendaciones
+
+AnalyticsSvc --> API: PDF bytes
+deactivate AnalyticsSvc
+API --> Portal: 200 OK\nContent-Type: application/pdf
+deactivate API
+Portal --> User: Descarga reporte.pdf
+deactivate Portal
+
+note right of Tracking
+  Tracking pixel:
+  <img src="/track/open/
+  {base64_encoded_ids}.png"
+  width="1" height="1"
+  style="display:none">
+end note
+
+note right of AnalyticsSvc
+  Link wrapping:
+  Original:
+  https://example.com/promo
+
+  Wrapped:
+  https://app.com/track/
+  click/{linkId}?
+  url=https://...
+end note
+
+note right of AnalyticsSvc
+  Engagement Score:
+  - Email open: +2 pts
+  - Link click: +5 pts
+  - Form submit: +10 pts
+  - Purchase: +20 pts
+  - Decay: -1 pt/día
+    sin interacción
+end note
+
+@enduml
