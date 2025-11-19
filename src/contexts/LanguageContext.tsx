@@ -139,7 +139,7 @@ const translations = {
     "settings.languageChanged": "Idioma cambiado a Español",
     
     // Footer
-    "footer.project": "Proyecto de práctica de software grupo #7",
+    "footer.project": "Unicaribe proyecto grupal",
   },
   en: {
     // Navigation
@@ -268,7 +268,7 @@ const translations = {
     "settings.languageChanged": "Language changed to English",
     
     // Footer
-    "footer.project": "Software practice project group #7",
+    "footer.project": "Unicaribe group project",
   }
 };
 
