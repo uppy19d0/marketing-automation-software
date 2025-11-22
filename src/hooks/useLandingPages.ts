@@ -21,12 +21,14 @@ export function useLandingPages() {
       setLoading(true);
       console.log('🔄 [useLandingPages] Fetching landing pages...');
       const response = await landingPageService.getLandingPages();
-      console.log('✅ [useLandingPages] Landing pages fetched:', response.data);
+      const payload = (response as any) || {};
+      const list = payload.data || payload;
+      console.log('✅ [useLandingPages] Landing pages fetched:', list);
 
       // Transform data to match component interface
-      const transformedPages: LandingPageWithStats[] = response.data.data?.map((page: any) => ({
+      const transformedPages: LandingPageWithStats[] = (list || []).map((page: any) => ({
         _id: page._id,
-        id: page._id,
+        id: page._id || page.id,
         name: page.name,
         slug: page.slug,
         title: page.title,

@@ -36,22 +36,23 @@ export interface LandingPage {
 
 class LandingPageService {
   async getLandingPages() {
-    return api.get(API_ENDPOINTS.LANDING_PAGES);
+    const response = await api.get(API_ENDPOINTS.LANDING_PAGES);
+    return response.data || response;
   }
 
   async getLandingPageById(id: string): Promise<LandingPage> {
     const response = await api.get(API_ENDPOINTS.LANDING_PAGE_BY_ID(id));
-    return response.data;
+    return response.data?.data || response.data || response;
   }
 
   async createLandingPage(landingPage: Omit<LandingPage, '_id' | 'createdAt' | 'updatedAt'>): Promise<LandingPage> {
     const response = await api.post(API_ENDPOINTS.LANDING_PAGES, landingPage);
-    return response.data;
+    return response.data?.data || response.data || response;
   }
 
   async updateLandingPage(id: string, landingPage: Partial<LandingPage>): Promise<LandingPage> {
     const response = await api.put(API_ENDPOINTS.LANDING_PAGE_BY_ID(id), landingPage);
-    return response.data;
+    return response.data?.data || response.data || response;
   }
 
   async deleteLandingPage(id: string): Promise<void> {
@@ -60,7 +61,7 @@ class LandingPageService {
 
   async publishLandingPage(id: string): Promise<LandingPage> {
     const response = await api.post(API_ENDPOINTS.PUBLISH_LANDING_PAGE(id));
-    return response.data;
+    return response.data?.data || response.data || response;
   }
 }
 

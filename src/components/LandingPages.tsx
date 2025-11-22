@@ -592,7 +592,8 @@ export function LandingPages() {
         toast.success(isDraft ? "Borrador actualizado" : "Landing page actualizada");
       } else {
         const created = await createPage(payload);
-        id = (created as any)?._id || (created as any)?.id;
+        const createdData = (created as any)?.data || created;
+        id = createdData?._id || createdData?.id;
         toast.success(isDraft ? "Borrador guardado" : "Landing page creada");
       }
 
