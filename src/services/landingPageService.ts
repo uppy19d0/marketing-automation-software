@@ -45,6 +45,11 @@ class LandingPageService {
     return response.data?.data || response.data || response;
   }
 
+  async getLandingPageBySlug(slug: string): Promise<LandingPage> {
+    const response = await api.get(API_ENDPOINTS.LANDING_PAGE_BY_SLUG(slug));
+    return response.data?.data || response.data || response;
+  }
+
   async createLandingPage(landingPage: Omit<LandingPage, '_id' | 'createdAt' | 'updatedAt'>): Promise<LandingPage> {
     const response = await api.post(API_ENDPOINTS.LANDING_PAGES, landingPage);
     return response.data?.data || response.data || response;
@@ -61,6 +66,11 @@ class LandingPageService {
 
   async publishLandingPage(id: string): Promise<LandingPage> {
     const response = await api.post(API_ENDPOINTS.PUBLISH_LANDING_PAGE(id));
+    return response.data?.data || response.data || response;
+  }
+
+  async submitLandingPage(id: string, payload: Record<string, any>) {
+    const response = await api.post(API_ENDPOINTS.SUBMIT_LANDING_PAGE(id), payload);
     return response.data?.data || response.data || response;
   }
 }

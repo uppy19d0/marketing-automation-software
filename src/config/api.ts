@@ -36,6 +36,8 @@ export const API_ENDPOINTS = {
   LANDING_PAGES: `${API_BASE_URL}/landing-pages`,
   LANDING_PAGE_BY_ID: (id: string) => `${API_BASE_URL}/landing-pages/${id}`,
   PUBLISH_LANDING_PAGE: (id: string) => `${API_BASE_URL}/landing-pages/${id}/publish`,
+  LANDING_PAGE_BY_SLUG: (slug: string) => `${API_BASE_URL}/landing-pages/slug/${slug}`,
+  SUBMIT_LANDING_PAGE: (id: string) => `${API_BASE_URL}/landing-pages/${id}/submit`,
   
   // Health
   HEALTH: `${API_BASE_URL}/health`,

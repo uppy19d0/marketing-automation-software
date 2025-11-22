@@ -33,9 +33,10 @@ interface LandingPagePreviewProps {
     };
   };
   landingPageId?: string;
+  onSubmit?: (formData: Record<string, string>, gdprAccepted: boolean) => Promise<void>;
 }
 
-export function LandingPagePreview({ data, landingPageId }: LandingPagePreviewProps) {
+export function LandingPagePreview({ data, landingPageId, onSubmit }: LandingPagePreviewProps) {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [gdprAccepted, setGdprAccepted] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -66,13 +67,15 @@ export function LandingPagePreview({ data, landingPageId }: LandingPagePreviewPr
     setIsSubmitting(true);
 
     try {
-      // Here you would call your API to submit the form
-      // For now, we'll simulate a submission
-      console.log('🔄 [LandingPagePreview] Simulating API submission...');
+      if (onSubmit) {
+        await onSubmit(formData, gdprAccepted);
+      } else {
+        // Simulación por defecto si no se pasa onSubmit
+        console.log('🔄 [LandingPagePreview] Simulating API submission...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      console.log('✅ [LandingPagePreview] Form submitted successfully');
+      console.log('✅ [LandingPagePreview] Form submitted successfully', { landingPageId });
       setIsSubmitted(true);
       toast.success(data.successMessage || "¡Gracias! Tu información ha sido recibida.");
     } catch (error) {
