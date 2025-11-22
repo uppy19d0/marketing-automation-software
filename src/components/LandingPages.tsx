@@ -1402,6 +1402,27 @@ export function LandingPages() {
                       {saving ? "Guardando..." : editingLanding ? "Actualizar" : "Publicar"}
                     </Button>
                   </div>
+
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <Card className="bg-muted/60 border-dashed border-border">
+                      <CardContent className="pt-4 space-y-2">
+                        <p className="text-sm font-semibold">1. Datos básicos</p>
+                        <p className="text-xs text-muted-foreground">Nombre, slug y mensaje principal. Activa la captura de fuente si quieres rastrear origen.</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-muted/60 border-dashed border-border">
+                      <CardContent className="pt-4 space-y-2">
+                        <p className="text-sm font-semibold">2. Branding y campos</p>
+                        <p className="text-xs text-muted-foreground">Sube imagen opcional, ajusta colores, botones y campos obligatorios.</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-muted/60 border-dashed border-border">
+                      <CardContent className="pt-4 space-y-2">
+                        <p className="text-sm font-semibold">3. Publicar</p>
+                        <p className="text-xs text-muted-foreground">Guarda borrador o publica para activar `/l/tu-slug` y comenzar a recibir leads.</p>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </TabsContent>
               </Tabs>
             </DialogContent>
