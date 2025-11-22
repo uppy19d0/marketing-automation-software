@@ -8,6 +8,8 @@ export interface LandingPage {
   description?: string;
   content: string;
   status: 'draft' | 'published' | 'archived';
+  captureSource?: boolean;
+  sourceLabel?: string;
   seo?: {
     metaTitle?: string;
     metaDescription?: string;
@@ -17,6 +19,15 @@ export interface LandingPage {
     primaryColor?: string;
     secondaryColor?: string;
     fontFamily?: string;
+    imageUrl?: string;
+  };
+  styling?: {
+    primaryColor?: string;
+    backgroundColor?: string;
+    textColor?: string;
+    buttonStyle?: "solid" | "outline" | "gradient";
+    layoutStyle?: "centered" | "split" | "hero";
+    imageUrl?: string;
   };
   formFields?: Array<{
     name: string;

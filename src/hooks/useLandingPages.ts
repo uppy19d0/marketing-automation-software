@@ -42,6 +42,8 @@ export function useLandingPages() {
         gdprConsent: page.gdprConsent,
         styling: page.styling,
         seo: page.seo,
+        captureSource: page.captureSource,
+        sourceLabel: page.sourceLabel,
         status: page.status,
         visits: page.stats?.visits || 0,
         submissions: page.stats?.submissions || 0,

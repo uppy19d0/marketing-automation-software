@@ -14,6 +14,8 @@ interface LandingPagePreviewProps {
     benefits?: string[];
     buttonText: string;
     successMessage: string;
+    captureSource?: boolean;
+    sourceLabel?: string;
     fields: {
       name: boolean;
       email: boolean;
@@ -203,6 +205,27 @@ export function LandingPagePreview({ data, landingPageId, onSubmit }: LandingPag
             {data.description}
           </p>
 
+          {data.styling.imageUrl && data.styling.layoutStyle !== "split" && (
+            <img
+              src={data.styling.imageUrl}
+              alt="Landing visual"
+              style={{
+                width: "100%",
+                borderRadius: "14px",
+                marginBottom: "24px",
+                boxShadow: "0 10px 40px rgba(0,0,0,0.25)",
+              }}
+            />
+          )}
+
+          {data.benefits && data.benefits.length > 0 && (
+            <ul style={{ marginBottom: "24px", paddingLeft: "18px", color: "#16a34a" }}>
+              {data.benefits.filter(Boolean).map((benefit, idx) => (
+                <li key={idx} style={{ marginBottom: "6px" }}>{benefit}</li>
+              ))}
+            </ul>
+          )}
+
           {data.benefits && data.benefits.length > 0 && (
             <ul style={{
               listStyle: "none",
@@ -283,6 +306,21 @@ export function LandingPagePreview({ data, landingPageId, onSubmit }: LandingPag
                     placeholder="Nombre de tu empresa"
                     value={formData.company || ""}
                     onChange={(e) => handleInputChange("company", e.target.value)}
+                    style={{ width: "100%", padding: "12px", fontSize: "16px" }}
+                  />
+                </div>
+              )}
+
+              {data.captureSource && (
+                <div>
+                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
+                    {data.sourceLabel || "Fuente / origen"}
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder={data.sourceLabel || "Cómo nos conociste"}
+                    value={formData.source || ""}
+                    onChange={(e) => handleInputChange("source", e.target.value)}
                     style={{ width: "100%", padding: "12px", fontSize: "16px" }}
                   />
                 </div>

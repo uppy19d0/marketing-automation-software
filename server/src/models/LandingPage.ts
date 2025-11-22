@@ -48,6 +48,8 @@ export interface ILandingPage extends Document {
   gdprConsent: boolean;
   styling: IStyling;
   seo: ISEO;
+  captureSource?: boolean;
+  sourceLabel?: string;
   status: 'published' | 'draft' | 'archived';
   stats: ILandingPageStats;
   publishedAt?: Date;
@@ -156,6 +158,15 @@ const LandingPageSchema: Schema = new Schema(
     seo: {
       type: SEOSchema,
       required: true,
+    },
+    captureSource: {
+      type: Boolean,
+      default: false,
+    },
+    sourceLabel: {
+      type: String,
+      default: 'Fuente / origen',
+      trim: true,
     },
     status: {
       type: String,

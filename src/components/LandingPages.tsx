@@ -101,6 +101,8 @@ interface LandingPage {
   gdprConsent: boolean;
   styling: LandingPageStyling;
   seo: LandingPageSEO;
+   captureSource?: boolean;
+   sourceLabel?: string;
   createdAt: Date;
   lastEdited: Date;
   bounceRate?: number;
@@ -430,6 +432,8 @@ export function LandingPages() {
     gdprConsent: page.gdprConsent !== false,
     styling: page.styling || defaultStyling,
     seo: page.seo || defaultSEO,
+    captureSource: page.captureSource,
+    sourceLabel: page.sourceLabel,
     createdAt: new Date(page.createdAt || Date.now()),
     lastEdited: new Date(page.updatedAt || Date.now()),
     bounceRate: page.bounceRate || 0,
@@ -460,6 +464,8 @@ export function LandingPages() {
     gdprConsent: true,
     styling: defaultStyling,
     seo: defaultSEO,
+    captureSource: false,
+    sourceLabel: "Fuente / origen",
   });
 
   // ============================================================================
@@ -485,6 +491,8 @@ export function LandingPages() {
     const defaults: any = {
       buttonText: "Enviar",
       benefits: ["", "", ""],
+      captureSource: true,
+      sourceLabel: "Cómo nos conociste",
     };
 
     switch (template.category) {
@@ -580,6 +588,8 @@ export function LandingPages() {
         metaTitle: formData.seo.metaTitle || formData.title,
         metaDescription: formData.seo.metaDescription || formData.description,
       },
+      captureSource: formData.captureSource,
+      sourceLabel: formData.sourceLabel,
       status: isDraft ? "draft" : "published",
     };
 
@@ -643,6 +653,8 @@ export function LandingPages() {
       fields: landing.fields,
       gdprConsent: landing.gdprConsent,
       styling: landing.styling,
+      captureSource: (landing as any).captureSource,
+      sourceLabel: (landing as any).sourceLabel,
     });
     setIsPreviewOpen(true);
   };
@@ -714,6 +726,8 @@ export function LandingPages() {
       gdprConsent: true,
       styling: defaultStyling,
       seo: defaultSEO,
+      captureSource: false,
+      sourceLabel: "Fuente / origen",
     });
     setSelectedTemplate(null);
     setEditingLanding(null);
@@ -931,21 +945,50 @@ export function LandingPages() {
                             <p className="text-xs text-muted-foreground">Solo visible internamente</p>
                           </div>
 
-                          <div className="space-y-2">
-                            <Label>URL Slug *</Label>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground px-3 py-2 bg-muted rounded-md whitespace-nowrap">/l/</span>
-                              <Input
-                                placeholder="guia-marketing-2025"
-                                value={formData.url}
-                                onChange={(e) =>
-                                  setFormData({ ...formData, url: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })
-                                }
-                              />
-                            </div>
-                            <p className="text-xs text-muted-foreground">Solo letras minúsculas, números y guiones</p>
-                          </div>
+                      <div className="space-y-2">
+                        <Label>URL Slug *</Label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground px-3 py-2 bg-muted rounded-md whitespace-nowrap">/l/</span>
+                          <Input
+                            placeholder="guia-marketing-2025"
+                            value={formData.url}
+                            onChange={(e) =>
+                              setFormData({ ...formData, url: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })
+                            }
+                          />
                         </div>
+                        <p className="text-xs text-muted-foreground">Solo letras minúsculas, números y guiones</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Imagen (opcional)</Label>
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = () => {
+                                setFormData({
+                                  ...formData,
+                                  styling: { ...formData.styling, imageUrl: reader.result as string },
+                                });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                        <p className="text-xs text-muted-foreground">Se guarda como base64 para la vista pública.</p>
+                        {formData.styling.imageUrl && (
+                          <img
+                            src={formData.styling.imageUrl}
+                            alt="Preview"
+                            className="w-full h-32 object-cover rounded border"
+                          />
+                        )}
+                      </div>
+                    </div>
                       </div>
 
                       <Separator />
@@ -981,6 +1024,28 @@ export function LandingPages() {
                             />
                             <Label>Empresa</Label>
                           </div>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={formData.captureSource}
+                              onCheckedChange={(checked) =>
+                                setFormData({ ...formData, captureSource: checked })
+                              }
+                            />
+                            <div className="flex flex-col">
+                              <Label>Campo de fuente / origen</Label>
+                              <p className="text-xs text-muted-foreground">Permite al usuario indicar de dónde llega.</p>
+                            </div>
+                          </div>
+                          {formData.captureSource && (
+                            <div className="space-y-2">
+                              <Label>Etiqueta del campo</Label>
+                              <Input
+                                value={formData.sourceLabel}
+                                onChange={(e) => setFormData({ ...formData, sourceLabel: e.target.value })}
+                                placeholder="Ej: ¿Cómo nos conociste?"
+                              />
+                            </div>
+                          )}
                           <div className="flex items-center gap-2">
                             <Switch
                               checked={formData.fields.jobTitle}

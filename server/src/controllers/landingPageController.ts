@@ -119,7 +119,11 @@ export const submitLandingPageForm = async (req: AuthRequest, res: Response) => 
       return res.status(404).json({ success: false, message: 'Landing page not found' });
     }
 
-    const { email, firstName, lastName, ...customFields } = req.body;
+    const { email, firstName, lastName, source, ...customFields } = req.body;
+    const mergedCustomFields: Record<string, any> = { ...customFields };
+    if (source) {
+      mergedCustomFields.source = source;
+    }
 
     // Create or update contact
     let contact = await Contact.findOne({ email });
@@ -127,7 +131,11 @@ export const submitLandingPageForm = async (req: AuthRequest, res: Response) => 
       // Update existing contact
       if (firstName) contact.firstName = firstName;
       if (lastName) contact.lastName = lastName;
-      Object.assign(contact.customFields, customFields);
+      if (source) {
+        contact.customFields = contact.customFields || new Map();
+        contact.customFields.set('source', source);
+      }
+      Object.assign(contact.customFields, mergedCustomFields);
       await contact.save();
     } else {
       // Create new contact
@@ -135,7 +143,7 @@ export const submitLandingPageForm = async (req: AuthRequest, res: Response) => 
         email,
         firstName,
         lastName,
-        customFields,
+        customFields: mergedCustomFields,
         status: 'subscribed',
       });
     }

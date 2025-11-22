@@ -43,6 +43,7 @@ export function PublicLanding({ slug }: PublicLandingProps) {
       phone: formData.phone,
       jobTitle: formData.jobTitle,
       message: formData.message,
+      source: formData.source,
     };
 
     await landingPageService.submitLandingPage(landing._id, payload);
@@ -77,6 +78,8 @@ export function PublicLanding({ slug }: PublicLandingProps) {
           benefits: (landing as any).benefits || [],
           buttonText: (landing as any).buttonText || "Enviar",
           successMessage: (landing as any).successMessage || "¡Gracias! Revisa tu email.",
+          captureSource: (landing as any).captureSource,
+          sourceLabel: (landing as any).sourceLabel,
           fields: (landing as any).formFields || {
             name: true,
             email: true,
