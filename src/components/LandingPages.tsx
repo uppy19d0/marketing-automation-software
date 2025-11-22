@@ -83,7 +83,7 @@ interface LandingPageSEO {
 }
 
 interface LandingPage {
-  id: number;
+  id: number | string;
   name: string;
   template: string;
   visits: number;
@@ -444,6 +444,7 @@ export function LandingPages() {
   const [editingLanding, setEditingLanding] = useState<LandingPage | null>(null);
   const [filterStatus, setFilterStatus] = useState<"all" | "Publicada" | "Borrador" | "Archivada">("all");
   const [sortBy, setSortBy] = useState<"recent" | "conversions" | "visits">("recent");
+  const [saving, setSaving] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -559,60 +560,55 @@ export function LandingPages() {
     return true;
   };
 
-  const handleCreateLanding = (isDraft: boolean) => {
+  const handleCreateLanding = async (isDraft: boolean) => {
     if (!validateForm()) return;
+    setSaving(true);
 
-    const newLanding: LandingPage = {
-      id: Date.now(),
+    const payload: any = {
       name: formData.name,
-      template: selectedTemplate?.name || "Personalizada",
-      visits: 0,
-      submissions: 0,
-      conversionRate: 0,
-      status: isDraft ? "Borrador" : "Publicada",
-      url: `/l/${formData.url}`,
+      slug: formData.url,
       title: formData.title,
       subtitle: formData.subtitle,
       description: formData.description,
-      benefits: formData.benefits.filter(b => b.trim() !== ""),
+      benefits: formData.benefits.filter((b) => b.trim() !== ""),
       buttonText: formData.buttonText,
-      successMessage: formData.successMessage,
-      fields: formData.fields,
+      successMessage: formData.successMessage || "¡Gracias! Revisa tu email.",
+      formFields: formData.fields,
       gdprConsent: formData.gdprConsent,
       styling: formData.styling,
       seo: {
         metaTitle: formData.seo.metaTitle || formData.title,
         metaDescription: formData.seo.metaDescription || formData.description,
       },
-      createdAt: new Date(),
-      lastEdited: new Date(),
+      status: isDraft ? "draft" : "published",
     };
 
-    if (editingLanding) {
-      setLandingPages(
-        landingPages.map((lp) =>
-          lp.id === editingLanding.id
-            ? { 
-                ...newLanding, 
-                id: editingLanding.id, 
-                visits: editingLanding.visits, 
-                submissions: editingLanding.submissions, 
-                conversionRate: editingLanding.conversionRate,
-                createdAt: editingLanding.createdAt,
-                bounceRate: editingLanding.bounceRate,
-                avgTimeOnPage: editingLanding.avgTimeOnPage,
-              }
-            : lp
-        )
-      );
-      toast.success("Landing page actualizada exitosamente");
-    } else {
-      setLandingPages([newLanding, ...landingPages]);
-      toast.success(isDraft ? "Borrador guardado" : "Landing page publicada exitosamente");
-    }
+    try {
+      let id: string | number | undefined = editingLanding?.id;
 
-    resetForm();
-    setIsDialogOpen(false);
+      if (editingLanding && editingLanding.id) {
+        await updatePage(String(editingLanding.id), payload);
+        id = editingLanding.id;
+        toast.success(isDraft ? "Borrador actualizado" : "Landing page actualizada");
+      } else {
+        const created = await createPage(payload);
+        id = (created as any)?._id || (created as any)?.id;
+        toast.success(isDraft ? "Borrador guardado" : "Landing page creada");
+      }
+
+      if (!isDraft && id) {
+        await publishPage(String(id));
+      }
+
+      await refreshPages();
+      resetForm();
+      setIsDialogOpen(false);
+    } catch (err: any) {
+      console.error("Error guardando landing:", err);
+      toast.error(err?.message || "No se pudo guardar la landing");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEditLanding = (landing: LandingPage) => {
@@ -655,35 +651,52 @@ export function LandingPages() {
     setIsPreviewOpen(true);
   };
 
-  const handleDeleteLanding = (id: number) => {
-    setLandingPages(landingPages.filter((lp) => lp.id !== id));
-    toast.success("Landing page eliminada");
+  const handleDeleteLanding = async (id: number | string) => {
+    try {
+      await deletePage(String(id));
+      await refreshPages();
+      toast.success("Landing page eliminada");
+    } catch (err: any) {
+      toast.error(err?.message || "No se pudo eliminar");
+    }
   };
 
-  const handleDuplicateLanding = (landing: LandingPage) => {
-    const newLanding: LandingPage = {
-      ...landing,
-      id: Date.now(),
+  const handleDuplicateLanding = async (landing: LandingPage) => {
+    const now = Date.now();
+    const slugBase = (landing.url || "").replace("/l/", "") || `landing-${now}`;
+    const duplicatePayload = {
       name: `${landing.name} (Copia)`,
-      url: `${landing.url}-copia-${Date.now()}`,
-      status: "Borrador",
-      visits: 0,
-      submissions: 0,
-      conversionRate: 0,
-      createdAt: new Date(),
-      lastEdited: new Date(),
+      slug: `${slugBase}-copia-${now}`,
+      title: landing.title,
+      subtitle: landing.subtitle,
+      description: landing.description,
+      benefits: landing.benefits,
+      buttonText: landing.buttonText,
+      successMessage: landing.successMessage,
+      formFields: landing.fields,
+      gdprConsent: landing.gdprConsent,
+      styling: landing.styling,
+      seo: landing.seo,
+      status: "draft",
     };
-    setLandingPages([newLanding, ...landingPages]);
-    toast.success("Landing page duplicada");
+
+    try {
+      await createPage(duplicatePayload as any);
+      await refreshPages();
+      toast.success("Landing page duplicada");
+    } catch (err: any) {
+      toast.error(err?.message || "No se pudo duplicar");
+    }
   };
 
-  const handleArchiveLanding = (id: number) => {
-    setLandingPages(
-      landingPages.map((lp) =>
-        lp.id === id ? { ...lp, status: "Archivada" as const } : lp
-      )
-    );
-    toast.success("Landing page archivada");
+  const handleArchiveLanding = async (id: number | string) => {
+    try {
+      await updatePage(String(id), { status: "archived" } as any);
+      await refreshPages();
+      toast.success("Landing page archivada");
+    } catch (err: any) {
+      toast.error(err?.message || "No se pudo archivar");
+    }
   };
 
   const resetForm = () => {
@@ -1315,12 +1328,12 @@ export function LandingPages() {
                       <Eye className="h-4 w-4 mr-2" />
                       Vista Previa
                     </Button>
-                    <Button variant="outline" onClick={() => handleCreateLanding(true)}>
-                      Guardar Borrador
+                    <Button variant="outline" onClick={() => handleCreateLanding(true)} disabled={saving}>
+                      {saving ? "Guardando..." : "Guardar Borrador"}
                     </Button>
-                    <Button onClick={() => handleCreateLanding(false)} size="lg">
+                    <Button onClick={() => handleCreateLanding(false)} size="lg" disabled={saving}>
                       <CheckCircle2 className="h-4 w-4 mr-2" />
-                      {editingLanding ? "Actualizar" : "Publicar"}
+                      {saving ? "Guardando..." : editingLanding ? "Actualizar" : "Publicar"}
                     </Button>
                   </div>
                 </TabsContent>
