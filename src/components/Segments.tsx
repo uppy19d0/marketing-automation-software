@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -6,29 +6,50 @@ import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Label } from "./ui/label";
-import { Plus, Users, X, Play } from "lucide-react";
+import { Plus, Users, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 import { useLanguage } from "../contexts/LanguageContext";
+import { segmentService, Segment } from "../services/segmentService";
 
-const segmentsData = [
-  { id: 1, name: "Nuevos Leads RD", count: 156, type: "Dinámico", rules: "Tag=nuevo AND País=RD AND Score≥50" },
-  { id: 2, name: "VIPs México", count: 89, type: "Dinámico", rules: "Tag=vip AND País=MX" },
-  { id: 3, name: "Lead Magnet Activos", count: 234, type: "Dinámico", rules: "Tag=lead-magnet AND Creado después 2024-01-01" },
-  { id: 4, name: "Lista Black Friday", count: 512, type: "Estático", rules: "Manual" },
-];
+type Rule = { field: string; operator: string; value: string; logic: string };
 
-const previewContacts = [
-  { email: "maria.gonzalez@email.com", name: "María González", tags: ["nuevo", "lead-magnet"], score: 85 },
-  { email: "sofia.torres@email.com", name: "Sofía Torres", tags: ["nuevo"], score: 72 },
-  { email: "laura.diaz@email.com", name: "Laura Díaz", tags: ["nuevo", "lead-magnet"], score: 58 },
-];
+const fieldMap: Record<string, string> = {
+  tag: "tags",
+  country: "country",
+  score: "score",
+  created: "createdAt",
+};
 
 export function Segments() {
-  const { t } = useLanguage();
-  const [rules, setRules] = useState<Array<{ field: string; operator: string; value: string; logic: string }>>([
-    { field: "tag", operator: "contiene", value: "nuevo", logic: "AND" }
+  const { t, language } = useLanguage();
+  const [segments, setSegments] = useState<Segment[]>([]);
+  const [rules, setRules] = useState<Rule[]>([
+    { field: "tag", operator: "contiene", value: "nuevo", logic: "AND" },
   ]);
-  const [showPreview, setShowPreview] = useState(false);
+  const [segmentName, setSegmentName] = useState("");
+  const [segmentType, setSegmentType] = useState<"dynamic" | "static">("dynamic");
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    loadSegments();
+  }, []);
+
+  const loadSegments = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await segmentService.getSegments();
+      const list = Array.isArray((response as any).data) ? ((response as any).data as Segment[]) : [];
+      setSegments(list);
+    } catch (err: any) {
+      setError(err.message || "No se pudieron cargar los segmentos");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const addRule = () => {
     setRules([...rules, { field: "tag", operator: "contiene", value: "", logic: "AND" }]);
@@ -44,15 +65,59 @@ export function Segments() {
     setRules(newRules);
   };
 
+  const handleCreateSegment = async () => {
+    if (!segmentName) {
+      setError("El nombre es obligatorio");
+      return;
+    }
+
+    setCreating(true);
+    setError(null);
+
+    try {
+      const apiRules = rules.map((rule, index) => ({
+        field: fieldMap[rule.field] || rule.field,
+        operator: rule.operator,
+        value: rule.value,
+        logic: index === 0 ? undefined : rule.logic,
+      }));
+
+      const created = await segmentService.createSegment({
+        name: segmentName,
+        type: segmentType,
+        rules: apiRules,
+      });
+
+      setSegments((prev) => [created, ...prev]);
+      setSegmentName("");
+      setSegmentType("dynamic");
+      setRules([{ field: "tag", operator: "contiene", value: "", logic: "AND" }]);
+      setDialogOpen(false);
+    } catch (err: any) {
+      setError(err.message || "No se pudo crear el segmento");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const formatRules = (segment: Segment) => {
+    if (!segment.rules || segment.rules.length === 0) return "—";
+    return segment.rules
+      .map((rule, index) => {
+        const connector = index > 0 ? ` ${rule.logic || "AND"} ` : "";
+        return `${connector}${rule.field} ${rule.operator} ${rule.value}`;
+      })
+      .join("");
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl">{t("segments.title")}</h2>
           <p className="text-sm text-muted-foreground mt-1">{t("segments.subtitle")}</p>
         </div>
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -64,15 +129,18 @@ export function Segments() {
               <DialogTitle>Crear Nuevo Segmento</DialogTitle>
             </DialogHeader>
             <div className="space-y-6 py-4">
-              {/* Basic Info */}
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>Nombre del Segmento</Label>
-                  <Input placeholder="Ej: Nuevos Leads RD" />
+                  <Input
+                    placeholder="Ej: Nuevos Leads RD"
+                    value={segmentName}
+                    onChange={(e) => setSegmentName(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Tipo</Label>
-                  <Select defaultValue="dynamic">
+                  <Select value={segmentType} onValueChange={(v: "dynamic" | "static") => setSegmentType(v)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -84,7 +152,6 @@ export function Segments() {
                 </div>
               </div>
 
-              {/* Rules Builder */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label>Reglas de Segmentación</Label>
@@ -93,7 +160,7 @@ export function Segments() {
                     Añadir regla
                   </Button>
                 </div>
-                
+
                 <div className="space-y-2">
                   {rules.map((rule, index) => (
                     <div key={index} className="flex items-center gap-2 p-3 bg-accent rounded-lg">
@@ -108,7 +175,7 @@ export function Segments() {
                           </SelectContent>
                         </Select>
                       )}
-                      
+
                       <Select value={rule.field} onValueChange={(v) => updateRule(index, "field", v)}>
                         <SelectTrigger className="w-[140px]">
                           <SelectValue />
@@ -141,11 +208,7 @@ export function Segments() {
                         className="flex-1"
                       />
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeRule(index)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => removeRule(index)}>
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
@@ -153,113 +216,64 @@ export function Segments() {
                 </div>
               </div>
 
-              {/* Preview */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Vista Previa</Label>
-                  <Button variant="outline" size="sm" onClick={() => setShowPreview(!showPreview)}>
-                    <Play className="h-4 w-4 mr-2" />
-                    {showPreview ? "Ocultar" : "Actualizar"} vista previa
-                  </Button>
-                </div>
-                
-                {showPreview && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        {previewContacts.length} contactos coinciden
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Nombre</TableHead>
-                            <TableHead>Etiquetas</TableHead>
-                            <TableHead>Score</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {previewContacts.map((contact, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell className="text-sm">{contact.email}</TableCell>
-                              <TableCell>{contact.name}</TableCell>
-                              <TableCell>
-                                <div className="flex gap-1">
-                                  {contact.tags.map((tag, i) => (
-                                    <Badge key={i} variant="secondary" className="text-xs">
-                                      {tag}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </TableCell>
-                              <TableCell>{contact.score}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
 
-              {/* Actions */}
-              <div className="flex gap-2 pt-4">
-                <Button className="flex-1">Guardar Segmento</Button>
-                <Button variant="outline" className="flex-1">Cancelar</Button>
+              <div className="flex justify-end">
+                <Button onClick={handleCreateSegment} disabled={creating}>
+                  {creating ? "Guardando..." : "Crear segmento"}
+                </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Segments List */}
-      <div className="grid gap-4">
-        {segmentsData.map((segment) => (
-          <Card key={segment.id} className="hover:border-brand transition-colors cursor-pointer">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Users className="h-5 w-5 text-brand" />
-                    <h3 className="text-xl">{segment.name}</h3>
-                    <Badge variant="outline">{segment.type}</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-3">{segment.rules}</p>
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <p className="text-2xl text-brand">{segment.count}</p>
-                      <p className="text-xs text-muted-foreground">contactos</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">Editar</Button>
-                  <Button variant="outline" size="sm">Duplicar</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Empty State */}
-      {segmentsData.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="pt-12 pb-12 text-center">
-            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl mb-2">Aún no tienes segmentos</h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              Crea tu primer segmento para organizar tus contactos
-            </p>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Crear Primer Segmento
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            {language === "es" ? "Segmentos activos" : "Active segments"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Cargando segmentos...</p>
+          ) : error ? (
+            <p className="text-sm text-destructive">{error}</p>
+          ) : segments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No hay segmentos aún.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Contactos</TableHead>
+                  <TableHead>Reglas</TableHead>
+                  <TableHead>Creado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {segments.map((segment) => (
+                  <TableRow key={segment._id || segment.name}>
+                    <TableCell className="font-medium">{segment.name}</TableCell>
+                    <TableCell>
+                      <Badge variant={segment.type === "dynamic" ? "secondary" : "outline"}>
+                        {segment.type === "dynamic" ? "Dinámico" : "Estático"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{segment.contactCount ?? 0}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{formatRules(segment)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {segment.createdAt ? new Date(segment.createdAt).toLocaleDateString() : "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

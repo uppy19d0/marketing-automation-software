@@ -31,7 +31,7 @@ npm install
 npm run dev
 ```
 
-El servidor se ejecutará en `http://localhost:5000` y creará automáticamente el usuario administrador si no existe.
+El servidor se ejecutará en `http://localhost:5001` y creará automáticamente el usuario administrador si no existe.
 
 ### 3. Iniciar el Frontend
 
@@ -117,7 +117,7 @@ El sistema verifica automáticamente si el usuario admin existe antes de crearlo
 
 ### Error de CORS
 Si ves errores de CORS, verifica que:
-1. El backend esté ejecutándose en el puerto 5000
+1. El backend esté ejecutándose en el puerto 5001
 2. La variable `CORS_ORIGIN` en `.env` apunte al frontend correcto
 
 ## Próximos Pasos

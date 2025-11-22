@@ -105,20 +105,20 @@ Respuesta de ejemplo:
 
 ### Opción 1: Usando cURL
 
-#### Desarrollo Local (Backend corriendo en localhost:5000)
+#### Desarrollo Local (Backend corriendo en localhost:5001)
 
 ```bash
 # Health check básico
-curl http://localhost:5000/api/health
+curl http://localhost:5001/api/health
 
 # Health check detallado
-curl http://localhost:5000/api/health/detailed
+curl http://localhost:5001/api/health/detailed
 
 # Readiness check
-curl http://localhost:5000/api/health/ready
+curl http://localhost:5001/api/health/ready
 
 # Liveness check
-curl http://localhost:5000/api/health/live
+curl http://localhost:5001/api/health/live
 ```
 
 #### Producción (Vercel)
@@ -142,10 +142,10 @@ curl -s $BASE_URL/api/health | jq '.'
 Simplemente abre estas URLs en tu navegador:
 
 **Local:**
-- http://localhost:5000/api/health
-- http://localhost:5000/api/health/detailed
-- http://localhost:5000/api/health/ready
-- http://localhost:5000/api/health/live
+- http://localhost:5001/api/health
+- http://localhost:5001/api/health/detailed
+- http://localhost:5001/api/health/ready
+- http://localhost:5001/api/health/live
 
 **Producción:**
 - https://tu-dominio.vercel.app/api/health
@@ -156,7 +156,7 @@ Simplemente abre estas URLs en tu navegador:
 ### Opción 3: Usando Postman o Thunder Client
 
 1. Crea una nueva request GET
-2. URL: `http://localhost:5000/api/health` (o tu URL de producción)
+2. URL: `http://localhost:5001/api/health` (o tu URL de producción)
 3. Envía la request
 4. Verifica que el status code sea 200
 5. Revisa la respuesta JSON
@@ -314,7 +314,7 @@ node monitor-health.js
 
 ### Error: Connection Refused
 ```bash
-curl: (7) Failed to connect to localhost port 5000: Connection refused
+curl: (7) Failed to connect to localhost port 5001: Connection refused
 ```
 
 **Solución:**

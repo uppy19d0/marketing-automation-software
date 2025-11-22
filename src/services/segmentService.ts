@@ -1,18 +1,17 @@
 import { api, API_ENDPOINTS } from '../config/api';
 
-export interface SegmentCondition {
-  field: string;
-  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'greater_than' | 'less_than' | 'in' | 'not_in';
-  value: any;
-}
-
 export interface Segment {
   _id?: string;
   name: string;
-  description?: string;
-  conditions: SegmentCondition[];
-  logic: 'AND' | 'OR';
+  type: 'dynamic' | 'static';
+  rules: Array<{
+    field: string;
+    operator: string;
+    value: string;
+    logic?: 'AND' | 'OR';
+  }>;
   contactCount?: number;
+  isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

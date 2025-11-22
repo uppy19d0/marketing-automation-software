@@ -9,7 +9,7 @@ const engagementData = [
   { date: "15 Jun", enviados: 4200, abiertos: 1470, clicks: 735, bounces: 84 },
   { date: "22 Jun", enviados: 3600, abiertos: 1260, clicks: 630, bounces: 72 },
   { date: "29 Jun", enviados: 4500, abiertos: 1575, clicks: 787, bounces: 90 },
-  { date: "6 Jul", enviados: 5000, abiertos: 1750, clicks: 875, bounces: 100 },
+  { date: "6 Jul", enviados: 5001, abiertos: 1750, clicks: 875, bounces: 100 },
 ];
 
 const revenueData = [

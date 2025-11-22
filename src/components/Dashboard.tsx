@@ -12,7 +12,7 @@ const statsData = [
 const emailPerformance = [
   { month: "Ene", enviados: 4000, abiertos: 1200, clicks: 800 },
   { month: "Feb", enviados: 3000, abiertos: 1398, clicks: 900 },
-  { month: "Mar", enviados: 5000, abiertos: 1800, clicks: 1200 },
+  { month: "Mar", enviados: 5001, abiertos: 1800, clicks: 1200 },
   { month: "Abr", enviados: 4500, abiertos: 1680, clicks: 1100 },
   { month: "May", enviados: 6000, abiertos: 2100, clicks: 1500 },
   { month: "Jun", enviados: 5500, abiertos: 1950, clicks: 1350 },

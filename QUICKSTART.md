@@ -42,7 +42,7 @@ npm install
 # Terminal 1 - Backend
 cd server
 npm run dev
-# ✅ Backend en http://localhost:5000
+# ✅ Backend en http://localhost:5001
 
 # Terminal 2 - Frontend
 npm run dev
@@ -56,7 +56,7 @@ npm run dev
 3. Crear cuenta o usar la API:
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST http://localhost:5001/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@test.com",
@@ -88,20 +88,20 @@ curl -X POST http://localhost:5000/api/auth/register \
 
 ```bash
 # Health check
-curl http://localhost:5000/api/health
+curl http://localhost:5001/api/health
 
 # Registrar usuario
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST http://localhost:5001/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"test123","name":"Test User"}'
 
 # Login (guarda el token)
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST http://localhost:5001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"test123"}'
 
 # Usar el token para crear un contacto
-curl -X POST http://localhost:5000/api/contacts \
+curl -X POST http://localhost:5001/api/contacts \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer TU_TOKEN_AQUI" \
   -d '{

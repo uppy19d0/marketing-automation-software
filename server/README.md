@@ -34,7 +34,7 @@ cp .env.example .env
 Editar `.env` con tus credenciales:
 ```env
 NODE_ENV=development
-PORT=5000
+PORT=5001
 MONGODB_URI=mongodb://localhost:27017/marketing-automation
 JWT_SECRET=your-secret-key
 JWT_EXPIRE=30d
@@ -178,7 +178,7 @@ La API usa JWT (JSON Web Tokens) para autenticación.
 
 1. Login o registro para obtener token:
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST http://localhost:5001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -188,7 +188,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 
 2. Incluir el token en el header Authorization:
 ```bash
-curl http://localhost:5000/api/contacts \
+curl http://localhost:5001/api/contacts \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
@@ -257,7 +257,7 @@ curl http://localhost:5000/api/contacts \
 npm test
 
 # Health check
-curl http://localhost:5000/api/health
+curl http://localhost:5001/api/health
 ```
 
 ## 🚀 Despliegue

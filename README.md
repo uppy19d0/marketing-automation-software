@@ -124,7 +124,7 @@ cd ..
 cd server
 npm run dev
 ```
-El backend estará en: http://localhost:5000
+El backend estará en: http://localhost:5001
 
 **Terminal 2 - Frontend:**
 ```bash
@@ -137,7 +137,7 @@ El frontend estará en: http://localhost:3000
 ### Crear Usuario Administrador
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/register \
+curl -X POST http://localhost:5001/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",

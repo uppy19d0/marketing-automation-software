@@ -4,26 +4,37 @@ export interface Campaign {
   _id?: string;
   name: string;
   subject: string;
-  content: string;
-  type: 'email' | 'sms' | 'push';
-  status: 'draft' | 'scheduled' | 'sent' | 'paused';
+  preheader?: string;
+  content: {
+    html: string;
+    blocks?: Array<{
+      type: 'title' | 'paragraph' | 'button' | 'image';
+      content: string;
+    }>;
+  };
+  isABTest?: boolean;
+  variants?: Array<{
+    name: string;
+    subject: string;
+    trafficPercentage: number;
+  }>;
+  status: 'draft' | 'scheduled' | 'sent' | 'sending';
   segmentId?: string;
   scheduledAt?: Date;
   sentAt?: Date;
+  recipientCount?: number;
   stats?: {
     sent: number;
-    delivered: number;
-    opened: number;
-    clicked: number;
-    bounced: number;
-    unsubscribed: number;
+    delivered?: number;
+    opens?: number;
+    uniqueOpens?: number;
+    clicks?: number;
+    uniqueClicks?: number;
+    bounces?: number;
+    unsubscribes?: number;
   };
-  abTest?: {
-    enabled: boolean;
-    variantA: string;
-    variantB: string;
-    splitPercentage: number;
-  };
+  openRate?: number;
+  ctr?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -71,8 +82,9 @@ class CampaignService {
     await api.delete(API_ENDPOINTS.CAMPAIGN_BY_ID(id));
   }
 
-  async sendCampaign(id: string): Promise<void> {
-    await api.post(API_ENDPOINTS.SEND_CAMPAIGN(id));
+  async sendCampaign(id: string) {
+    const response = await api.post(API_ENDPOINTS.SEND_CAMPAIGN(id));
+    return response.data || response;
   }
 
   async getCampaignStats(id: string) {

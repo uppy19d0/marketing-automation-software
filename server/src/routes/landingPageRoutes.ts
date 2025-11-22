@@ -7,6 +7,7 @@ import {
   updateLandingPage,
   deleteLandingPage,
   submitLandingPageForm,
+  publishLandingPage,
 } from '../controllers/landingPageController';
 import { protect } from '../middleware/auth';
 
@@ -27,5 +28,7 @@ router.route('/:id')
   .get(getLandingPage)
   .put(updateLandingPage)
   .delete(deleteLandingPage);
+
+router.post('/:id/publish', publishLandingPage);
 
 export default router;

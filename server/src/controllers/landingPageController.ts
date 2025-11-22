@@ -86,6 +86,32 @@ export const deleteLandingPage = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const publishLandingPage = async (req: AuthRequest, res: Response) => {
+  try {
+    const landingPage = await LandingPage.findById(req.params.id);
+    if (!landingPage) {
+      return res.status(404).json({ success: false, message: 'Landing page not found' });
+    }
+
+    landingPage.status = 'published';
+    landingPage.publishedAt = new Date();
+
+    // Ensure SEO defaults exist
+    if (!landingPage.seo) {
+      landingPage.seo = { metaTitle: landingPage.title, metaDescription: landingPage.subtitle || landingPage.description || '' };
+    } else {
+      landingPage.seo.metaTitle = landingPage.seo.metaTitle || landingPage.title;
+      landingPage.seo.metaDescription = landingPage.seo.metaDescription || landingPage.subtitle || landingPage.description || '';
+    }
+
+    await landingPage.save();
+
+    res.status(200).json({ success: true, data: landingPage });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const submitLandingPageForm = async (req: AuthRequest, res: Response) => {
   try {
     const landingPage = await LandingPage.findById(req.params.id);

@@ -4,7 +4,6 @@ import { ContactsNew } from "./components/ContactsNew";
 import { Segments } from "./components/Segments";
 import { CampaignsNew } from "./components/CampaignsNew";
 import { LandingPages } from "./components/LandingPages";
-import { Automations } from "./components/Automations";
 import { Reports } from "./components/Reports";
 import { Settings } from "./components/Settings";
 import { Button } from "./components/ui/button";
@@ -15,7 +14,6 @@ import {
   Filter, 
   Mail, 
   FileText, 
-  GitBranch, 
   BarChart3, 
   Settings as SettingsIcon,
   Search,
@@ -41,7 +39,7 @@ import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Login } from "./components/Login";
 
-type ViewType = "dashboard" | "contacts" | "segments" | "campaigns" | "landings" | "automations" | "reports" | "settings";
+type ViewType = "dashboard" | "contacts" | "segments" | "campaigns" | "landings" | "reports" | "settings";
 
 function AppContent() {
   const { t } = useLanguage();
@@ -77,7 +75,6 @@ function AppContent() {
     { name: t("nav.segments"), icon: Filter, value: "segments" as ViewType },
     { name: t("nav.campaigns"), icon: Mail, value: "campaigns" as ViewType },
     { name: t("nav.landings"), icon: FileText, value: "landings" as ViewType },
-    { name: t("nav.automations"), icon: GitBranch, value: "automations" as ViewType },
     { name: t("nav.reports"), icon: BarChart3, value: "reports" as ViewType },
     { name: t("nav.settings"), icon: SettingsIcon, value: "settings" as ViewType },
   ];
@@ -94,8 +91,6 @@ function AppContent() {
         return <CampaignsNew />;
       case "landings":
         return <LandingPages />;
-      case "automations":
-        return <Automations />;
       case "reports":
         return <Reports />;
       case "settings":

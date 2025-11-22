@@ -40,7 +40,7 @@ El middleware `express-rate-limit` necesita acceder a la IP real del cliente par
 ### Configuración de Puerto
 
 También se corrigió el puerto del API en el frontend:
-- **Desarrollo**: `http://localhost:5000/api`
+- **Desarrollo**: `http://localhost:5001/api`
 - **Producción**: `/api` (usa el mismo dominio)
 
 ## Notas de Seguridad
@@ -68,7 +68,7 @@ Para producción, asegúrate de configurar:
 
 ```env
 NODE_ENV=production
-PORT=5000
+PORT=5001
 MONGODB_URI=tu_mongodb_uri_de_produccion
 JWT_SECRET=un_secreto_muy_seguro_y_largo
 JWT_EXPIRE=30d
@@ -87,12 +87,12 @@ Para verificar que el rate limiting funciona correctamente:
 
 2. **Hacer múltiples peticiones**:
    ```bash
-   for i in {1..10}; do curl http://localhost:5000/api/health; done
+   for i in {1..10}; do curl http://localhost:5001/api/health; done
    ```
 
 3. **Verificar headers de respuesta**:
    ```bash
-   curl -I http://localhost:5000/api/health
+   curl -I http://localhost:5001/api/health
    ```
    
    Deberías ver headers como:

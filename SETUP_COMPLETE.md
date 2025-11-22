@@ -336,7 +336,7 @@ async function createCampaign() {
 - ✅ Limpia caché: `rm -rf node_modules package-lock.json && npm install`
 
 ### Frontend no se conecta al backend
-- ✅ En desarrollo: Backend debe estar en `localhost:5000`
+- ✅ En desarrollo: Backend debe estar en `localhost:5001`
 - ✅ En producción: Las rutas son relativas (`/api/*`)
 - ✅ Verifica CORS en la configuración del backend
 

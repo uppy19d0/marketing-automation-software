@@ -2,14 +2,17 @@ import { api, API_ENDPOINTS } from '../config/api';
 
 export interface Contact {
   _id?: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   phone?: string;
   company?: string;
   tags?: string[];
+  country?: string;
+  city?: string;
+  score?: number;
   customFields?: Record<string, any>;
-  status: 'active' | 'unsubscribed' | 'bounced';
+  status: 'subscribed' | 'unsubscribed' | 'bounced';
   source?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -34,6 +37,11 @@ export interface ContactsResponse {
   };
 }
 
+export interface ContactDetailResponse {
+  contact: Contact;
+  events?: any[];
+}
+
 class ContactService {
   async getContacts(filters?: ContactFilters): Promise<ContactsResponse> {
     const params = new URLSearchParams();
@@ -54,9 +62,9 @@ class ContactService {
     return api.get(url);
   }
 
-  async getContactById(id: string): Promise<Contact> {
+  async getContactById(id: string): Promise<Contact | ContactDetailResponse> {
     const response = await api.get(API_ENDPOINTS.CONTACT_BY_ID(id));
-    return response.data;
+    return response.data || response;
   }
 
   async createContact(contact: Omit<Contact, '_id' | 'createdAt' | 'updatedAt'>): Promise<Contact> {

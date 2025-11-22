@@ -1,9 +1,12 @@
 // API Configuration
 const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+const envApiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
 
-export const API_BASE_URL = isDevelopment
-  ? 'http://localhost:5000/api'
-  : '/api';
+export const API_BASE_URL = envApiBaseUrl
+  ? envApiBaseUrl.replace(/\/$/, '')
+  : isDevelopment
+    ? 'http://localhost:5001/api'
+    : '/api';
 
 export const API_ENDPOINTS = {
   // Auth

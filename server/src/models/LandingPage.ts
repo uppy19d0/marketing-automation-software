@@ -82,8 +82,8 @@ const StylingSchema = new Schema({
 }, { _id: false });
 
 const SEOSchema = new Schema({
-  metaTitle: { type: String, required: true },
-  metaDescription: { type: String, required: true },
+  metaTitle: { type: String, default: '' },
+  metaDescription: { type: String, default: '' },
   ogImage: { type: String },
   keywords: { type: [String], default: [] },
 }, { _id: false });
@@ -127,7 +127,7 @@ const LandingPageSchema: Schema = new Schema(
     },
     description: {
       type: String,
-      required: true,
+      default: '',
     },
     benefits: {
       type: [String],

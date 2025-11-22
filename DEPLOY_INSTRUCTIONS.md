@@ -142,7 +142,7 @@ Asegúrate de que MongoDB Atlas permita conexiones desde Vercel:
 - Verifica que `package.json` tenga todas las dependencias
 
 ### Frontend no se conecta al backend
-- En desarrollo: Asegúrate de que el backend esté corriendo en `localhost:5000`
+- En desarrollo: Asegúrate de que el backend esté corriendo en `localhost:5001`
 - En producción: Las rutas de API son relativas (`/api/*`)
 
 ### Build falla en Vercel
