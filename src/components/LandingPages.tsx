@@ -28,7 +28,14 @@ import {
   MousePointerClick,
   Layout,
   Sparkles,
-  X
+  X,
+  Download,
+  BarChart3,
+  Calendar,
+  Target,
+  Clock,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Switch } from "./ui/switch";
 import {
@@ -449,6 +456,8 @@ export function LandingPages() {
   const [filterStatus, setFilterStatus] = useState<"all" | "Publicada" | "Borrador" | "Archivada">("all");
   const [sortBy, setSortBy] = useState<"recent" | "conversions" | "visits">("recent");
   const [saving, setSaving] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [expandedLandingId, setExpandedLandingId] = useState<string | number | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -467,6 +476,75 @@ export function LandingPages() {
     captureSource: false,
     sourceLabel: "Fuente / origen",
   });
+
+  // ============================================================================
+  // ANALYTICS & EXPORT
+  // ============================================================================
+
+  const exportAnalyticsReport = () => {
+    const csvHeaders = [
+      "Nombre",
+      "URL",
+      "Estado",
+      "Visitas",
+      "Conversiones",
+      "Tasa de Conversión (%)",
+      "Bounce Rate (%)",
+      "Tiempo Promedio (s)",
+      "Creada",
+      "Última Edición"
+    ];
+
+    const csvRows = displayedPages.map(lp => [
+      lp.name,
+      lp.url,
+      lp.status,
+      lp.visits,
+      lp.submissions,
+      lp.conversionRate.toFixed(2),
+      (lp.bounceRate || 0).toFixed(2),
+      lp.avgTimeOnPage || 0,
+      lp.createdAt.toLocaleDateString(),
+      lp.lastEdited.toLocaleDateString()
+    ]);
+
+    const csvContent = [
+      csvHeaders.join(","),
+      ...csvRows.map(row => row.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `landing-pages-analytics-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success(language === "es" ? "Reporte exportado exitosamente" : "Report exported successfully");
+  };
+
+  const getPerformanceInsights = () => {
+    if (landingPages.length === 0) return null;
+
+    const publishedPages = landingPages.filter(lp => lp.status === "Publicada");
+    if (publishedPages.length === 0) return null;
+
+    const topPerformer = [...publishedPages].sort((a, b) => b.conversionRate - a.conversionRate)[0];
+    const mostVisited = [...publishedPages].sort((a, b) => b.visits - a.visits)[0];
+    const totalConversionRate = publishedPages.reduce((sum, lp) => sum + lp.conversionRate, 0) / publishedPages.length;
+    const pagesAboveAvg = publishedPages.filter(lp => lp.conversionRate > totalConversionRate).length;
+
+    return {
+      topPerformer,
+      mostVisited,
+      avgConversionRate: totalConversionRate,
+      pagesAboveAvg,
+      totalPublished: publishedPages.length
+    };
+  };
 
   // ============================================================================
   // HANDLERS
@@ -861,26 +939,42 @@ export function LandingPages() {
                 </DialogTitle>
               </DialogHeader>
 
+              {/* Progress Indicator */}
+              <div className="px-6 pt-4 pb-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {language === "es" ? "Progreso de Creación" : "Creation Progress"}
+                  </span>
+                  <span className="text-sm font-bold text-brand">
+                    {currentTab === "template" ? "25%" : currentTab === "content" ? "50%" : currentTab === "design" ? "75%" : "100%"}
+                  </span>
+                </div>
+                <Progress
+                  value={currentTab === "template" ? 25 : currentTab === "content" ? 50 : currentTab === "design" ? 75 : 100}
+                  className="h-2"
+                />
+              </div>
+
               <Tabs value={currentTab} onValueChange={setCurrentTab} className="py-4">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="template" className="text-xs sm:text-sm">
+                <TabsList className="grid w-full grid-cols-4 bg-muted/50">
+                  <TabsTrigger value="template" className="text-xs sm:text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
                     <Layout className="h-4 w-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">Plantilla</span>
+                    <span className="hidden sm:inline">1. Plantilla</span>
                     <span className="sm:hidden">1</span>
                   </TabsTrigger>
-                  <TabsTrigger value="content" disabled={!selectedTemplate && !editingLanding} className="text-xs sm:text-sm">
+                  <TabsTrigger value="content" disabled={!selectedTemplate && !editingLanding} className="text-xs sm:text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
                     <FileText className="h-4 w-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">Contenido</span>
+                    <span className="hidden sm:inline">2. Contenido</span>
                     <span className="sm:hidden">2</span>
                   </TabsTrigger>
-                  <TabsTrigger value="design" disabled={!selectedTemplate && !editingLanding} className="text-xs sm:text-sm">
+                  <TabsTrigger value="design" disabled={!selectedTemplate && !editingLanding} className="text-xs sm:text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
                     <Palette className="h-4 w-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">Diseño</span>
+                    <span className="hidden sm:inline">3. Diseño</span>
                     <span className="sm:hidden">3</span>
                   </TabsTrigger>
-                  <TabsTrigger value="seo" disabled={!selectedTemplate && !editingLanding} className="text-xs sm:text-sm">
+                  <TabsTrigger value="seo" disabled={!selectedTemplate && !editingLanding} className="text-xs sm:text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
                     <Code className="h-4 w-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">SEO</span>
+                    <span className="hidden sm:inline">4. SEO</span>
                     <span className="sm:hidden">4</span>
                   </TabsTrigger>
                 </TabsList>
@@ -1403,25 +1497,97 @@ export function LandingPages() {
                     </Button>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <Card className="bg-muted/60 border-dashed border-border">
-                      <CardContent className="pt-4 space-y-2">
-                        <p className="text-sm font-semibold">1. Datos básicos</p>
-                        <p className="text-xs text-muted-foreground">Nombre, slug y mensaje principal. Activa la captura de fuente si quieres rastrear origen.</p>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-muted/60 border-dashed border-border">
-                      <CardContent className="pt-4 space-y-2">
-                        <p className="text-sm font-semibold">2. Branding y campos</p>
-                        <p className="text-xs text-muted-foreground">Sube imagen opcional, ajusta colores, botones y campos obligatorios.</p>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-muted/60 border-dashed border-border">
-                      <CardContent className="pt-4 space-y-2">
-                        <p className="text-sm font-semibold">3. Publicar</p>
-                        <p className="text-xs text-muted-foreground">Guarda borrador o publica para activar `/l/tu-slug` y comenzar a recibir leads.</p>
-                      </CardContent>
-                    </Card>
+                  {/* Enhanced Help Guide */}
+                  <div className="mt-6 bg-gradient-to-br from-brand/5 to-brand/10 border border-brand/20 rounded-xl p-6">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="h-10 w-10 rounded-lg bg-brand/20 flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="h-5 w-5 text-brand" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-base mb-1">
+                          {language === "es" ? "Guía Rápida de Lanzamiento" : "Quick Launch Guide"}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          {language === "es"
+                            ? "Sigue estos pasos para crear y publicar tu landing page de forma exitosa"
+                            : "Follow these steps to successfully create and publish your landing page"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex gap-3">
+                        <div className="h-8 w-8 rounded-full bg-brand text-white flex items-center justify-center flex-shrink-0 font-bold text-sm">
+                          1
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm mb-1">
+                            {language === "es" ? "Configura el Contenido" : "Set Up Content"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {language === "es"
+                              ? "Define el nombre interno, URL slug único, título principal, beneficios clave y mensaje de éxito que verán tus leads."
+                              : "Define internal name, unique URL slug, main title, key benefits, and success message your leads will see."}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="h-8 w-8 rounded-full bg-brand text-white flex items-center justify-center flex-shrink-0 font-bold text-sm">
+                          2
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm mb-1">
+                            {language === "es" ? "Personaliza el Diseño" : "Customize Design"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {language === "es"
+                              ? "Ajusta colores de marca, estilo del botón, layout y campos del formulario. Sube una imagen hero opcional para mayor impacto."
+                              : "Adjust brand colors, button style, layout and form fields. Upload an optional hero image for greater impact."}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="h-8 w-8 rounded-full bg-brand text-white flex items-center justify-center flex-shrink-0 font-bold text-sm">
+                          3
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm mb-1">
+                            {language === "es" ? "Optimiza para SEO" : "Optimize for SEO"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {language === "es"
+                              ? "Completa meta título, descripción y keywords para mejorar el posicionamiento en buscadores y aumentar tráfico orgánico."
+                              : "Complete meta title, description and keywords to improve search rankings and increase organic traffic."}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="h-8 w-8 rounded-full bg-success text-white flex items-center justify-center flex-shrink-0 font-bold text-sm">
+                          4
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm mb-1">
+                            {language === "es" ? "Publica y Comparte" : "Publish and Share"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {language === "es"
+                              ? "Haz clic en 'Publicar' para activar tu página en /l/tu-slug. Comparte el enlace en redes sociales, emails y campañas."
+                              : "Click 'Publish' to activate your page at /l/your-slug. Share the link on social media, emails and campaigns."}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-brand/20">
+                      <p className="text-xs text-muted-foreground italic">
+                        💡 {language === "es"
+                          ? "Tip: Guarda como borrador en cualquier momento y vuelve a editar antes de publicar."
+                          : "Tip: Save as draft at any time and come back to edit before publishing."}
+                      </p>
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>
