@@ -123,8 +123,8 @@ export function Settings() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {language === "es" 
-                      ? "Esta es una versión demo sin integraciones externas. Todos los datos son simulados y se almacenan localmente en tu navegador."
-                      : "This is a demo version without external integrations. All data is simulated and stored locally in your browser."}
+                      ? "Esta es una versión demo sin integraciones externas."
+                      : "This is a demo version without external integrations."}
                   </p>
                 </div>
               </div>

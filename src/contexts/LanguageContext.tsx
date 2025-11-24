@@ -139,7 +139,7 @@ const translations = {
     "settings.languageChanged": "Idioma cambiado a Español",
     
     // Footer
-    "footer.project": "Unicaribe proyecto grupal",
+    "footer.project": "Unicaribe proyecto grupal - Luis A. Tavarez",
   },
   en: {
     // Navigation
