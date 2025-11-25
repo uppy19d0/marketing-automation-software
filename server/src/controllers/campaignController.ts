@@ -5,6 +5,62 @@ import Event from '../models/Event';
 import { AuthRequest } from '../middleware/auth';
 import { sendEmail } from '../services/emailService';
 
+// Send a campaign to a single, specific contact (by id or email)
+export const sendCampaignToContact = async (req: AuthRequest, res: Response) => {
+  try {
+    const { contactId, email } = req.body;
+
+    if (!contactId && !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Provide "contactId" or "email" to send the campaign.',
+      });
+    }
+
+    const campaign = await Campaign.findById(req.params.id);
+    if (!campaign) {
+      return res.status(404).json({ success: false, message: 'Campaign not found' });
+    }
+
+    const contact = await Contact.findOne(
+      contactId ? { _id: contactId } : { email: (email as string).toLowerCase().trim() }
+    );
+
+    if (!contact) {
+      return res.status(404).json({ success: false, message: 'Contact not found' });
+    }
+
+    if (contact.status !== 'subscribed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Contact is not subscribed; campaign will not be sent.',
+      });
+    }
+
+    const subject = campaign.subject;
+    const html = campaign.content?.html || '<p>(Sin contenido)</p>';
+
+    await sendEmail(contact.email, subject, html);
+
+    campaign.recipientCount = (campaign.recipientCount || 0) + 1;
+    campaign.stats.sent = (campaign.stats.sent || 0) + 1;
+    campaign.status = 'sent';
+    campaign.sentAt = new Date();
+    await campaign.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Campaign sent to ${contact.email}`,
+      data: {
+        campaignId: campaign._id,
+        contactId: contact._id,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const getCampaigns = async (req: AuthRequest, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;

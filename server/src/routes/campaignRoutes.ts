@@ -8,6 +8,7 @@ import {
   sendCampaign,
   getCampaignStats,
   sendTestEmail,
+  sendCampaignToContact,
 } from '../controllers/campaignController';
 import { protect } from '../middleware/auth';
 
@@ -24,6 +25,7 @@ router.route('/:id')
   .put(updateCampaign)
   .delete(deleteCampaign);
 
+router.post('/:id/send/contact', sendCampaignToContact);
 router.post('/:id/send', sendCampaign);
 router.get('/:id/stats', getCampaignStats);
 router.post('/test/send', sendTestEmail);
