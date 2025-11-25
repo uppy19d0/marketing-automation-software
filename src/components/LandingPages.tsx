@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLandingPages } from "../hooks/useLandingPages";
 import { LandingPagePreview } from "./LandingPagePreview";
+import { LandingPageAnalytics } from "./LandingPageAnalytics";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -35,7 +36,8 @@ import {
   Target,
   Clock,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ArchiveRestore
 } from "lucide-react";
 import { Switch } from "./ui/switch";
 import {
@@ -457,6 +459,7 @@ export function LandingPages() {
   const [sortBy, setSortBy] = useState<"recent" | "conversions" | "visits">("recent");
   const [saving, setSaving] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [analyticsLanding, setAnalyticsLanding] = useState<LandingPage | null>(null);
   const [expandedLandingId, setExpandedLandingId] = useState<string | number | null>(null);
 
   // Form state
@@ -790,6 +793,16 @@ export function LandingPages() {
     }
   };
 
+  const handleUnarchiveLanding = async (id: number | string) => {
+    try {
+      await updatePage(String(id), { status: "draft" } as any);
+      await refreshPages();
+      toast.success("Landing page desarchivada");
+    } catch (err: any) {
+      toast.error(err?.message || "No se pudo desarchivar");
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -1073,13 +1086,30 @@ export function LandingPages() {
                             }
                           }}
                         />
-                        <p className="text-xs text-muted-foreground">Se guarda como base64 para la vista pública.</p>
+                        <p className="text-xs text-muted-foreground">
+                          Se guarda automáticamente. Formatos: JPG, PNG, GIF, WebP. Tamaño recomendado: 1200x800px.
+                        </p>
                         {formData.styling.imageUrl && (
-                          <img
-                            src={formData.styling.imageUrl}
-                            alt="Preview"
-                            className="w-full h-32 object-cover rounded border"
-                          />
+                          <div className="relative">
+                            <img
+                              src={formData.styling.imageUrl}
+                              alt="Preview"
+                              className="w-full h-32 object-cover rounded border"
+                            />
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="absolute top-2 right-2"
+                              onClick={() =>
+                                setFormData({
+                                  ...formData,
+                                  styling: { ...formData.styling, imageUrl: undefined },
+                                })
+                              }
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1356,20 +1386,49 @@ export function LandingPages() {
                         </div>
 
                         <div className="space-y-2">
-                          <Label>URL de Imagen (Opcional)</Label>
+                          <Label>Imagen (Opcional)</Label>
                           <Input
-                            placeholder="https://ejemplo.com/imagen.jpg"
-                            value={formData.styling.imageUrl || ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                styling: { ...formData.styling, imageUrl: e.target.value },
-                              })
-                            }
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                  setFormData({
+                                    ...formData,
+                                    styling: { ...formData.styling, imageUrl: reader.result as string },
+                                  });
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
                           />
                           <p className="text-xs text-muted-foreground">
-                            Para layout "split" o "hero"
+                            Para layout "split" o "hero". Se guarda automáticamente.
                           </p>
+                          {formData.styling.imageUrl && (
+                            <div className="relative">
+                              <img
+                                src={formData.styling.imageUrl}
+                                alt="Preview"
+                                className="w-full h-40 object-cover rounded border"
+                              />
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="absolute top-2 right-2"
+                                onClick={() =>
+                                  setFormData({
+                                    ...formData,
+                                    styling: { ...formData.styling, imageUrl: undefined },
+                                  })
+                                }
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1787,6 +1846,22 @@ export function LandingPages() {
                         {language === "es" ? "Vista previa" : "Preview"}
                       </span>
                     </Button>
+                    {landing.status === "Publicada" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setAnalyticsLanding(landing);
+                          setShowAnalytics(true);
+                        }}
+                        className="flex-1 sm:flex-none min-w-[80px]"
+                      >
+                        <BarChart3 className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">
+                          {language === "es" ? "Analytics" : "Analytics"}
+                        </span>
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" onClick={() => handleEditLanding(landing)} className="flex-1 sm:flex-none min-w-[80px]">
                       <Edit2 className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">
@@ -1799,6 +1874,12 @@ export function LandingPages() {
                     {landing.status !== "Archivada" && (
                       <Button variant="outline" size="sm" onClick={() => handleArchiveLanding(landing.id)} className="hidden lg:inline-flex">
                         {language === "es" ? "Archivar" : "Archive"}
+                      </Button>
+                    )}
+                    {landing.status === "Archivada" && (
+                      <Button variant="outline" size="sm" onClick={() => handleUnarchiveLanding(landing.id)} className="hidden lg:inline-flex">
+                        <ArchiveRestore className="h-4 w-4 mr-2" />
+                        {language === "es" ? "Desarchivar" : "Unarchive"}
                       </Button>
                     )}
                     <AlertDialog>
@@ -1912,6 +1993,26 @@ export function LandingPages() {
         )}
         </div>
       )}
+
+      {/* Analytics Dialog */}
+      <Dialog open={showAnalytics} onOpenChange={setShowAnalytics}>
+        <DialogContent className="max-w-[95vw] w-full max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "es" ? "Analytics Detallado" : "Detailed Analytics"}
+            </DialogTitle>
+            <DialogDescription>
+              {analyticsLanding?.name}
+            </DialogDescription>
+          </DialogHeader>
+          {analyticsLanding && (
+            <LandingPageAnalytics
+              landingPageId={analyticsLanding._id || analyticsLanding.id.toString()}
+              landingPageName={analyticsLanding.name}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

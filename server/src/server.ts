@@ -13,6 +13,7 @@ import contactRoutes from './routes/contactRoutes';
 import campaignRoutes from './routes/campaignRoutes';
 import segmentRoutes from './routes/segmentRoutes';
 import landingPageRoutes from './routes/landingPageRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
 
 // Load env vars
 dotenv.config();
@@ -43,8 +44,29 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // CORS configuration
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:5173')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+const allowAllOrigins = allowedOrigins.includes('*');
+
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow all origins if '*' is configured
+    if (allowAllOrigins) {
+      return callback(null, true);
+    }
+
+    // Allow non-browser or same-origin requests (no Origin header)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 };
 
@@ -61,6 +83,7 @@ app.use('/api/contacts', contactRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/segments', segmentRoutes);
 app.use('/api/landing-pages', landingPageRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Root route
 app.get('/', (req, res) => {

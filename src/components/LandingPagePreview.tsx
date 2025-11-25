@@ -36,9 +36,11 @@ interface LandingPagePreviewProps {
   };
   landingPageId?: string;
   onSubmit?: (formData: Record<string, string>, gdprAccepted: boolean) => Promise<void>;
+  onButtonClick?: (buttonText: string) => void;
+  onFormFocus?: (fieldName: string) => void;
 }
 
-export function LandingPagePreview({ data, landingPageId, onSubmit }: LandingPagePreviewProps) {
+export function LandingPagePreview({ data, landingPageId, onSubmit, onButtonClick, onFormFocus }: LandingPagePreviewProps) {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [gdprAccepted, setGdprAccepted] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -48,12 +50,23 @@ export function LandingPagePreview({ data, landingPageId, onSubmit }: LandingPag
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleFieldFocus = (fieldName: string) => {
+    if (onFormFocus) {
+      onFormFocus(fieldName);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     console.log('🔄 [LandingPagePreview] Form submission started');
     console.log('📝 [LandingPagePreview] Form data:', formData);
     console.log('✅ [LandingPagePreview] GDPR accepted:', gdprAccepted);
+
+    // Track button click
+    if (onButtonClick) {
+      onButtonClick(data.buttonText);
+    }
 
     // Validation
     if (data.gdprConsent && !gdprAccepted) {
@@ -275,6 +288,7 @@ export function LandingPagePreview({ data, landingPageId, onSubmit }: LandingPag
                     required
                     value={formData.name || ""}
                     onChange={(e) => handleInputChange("name", e.target.value)}
+                    onFocus={() => handleFieldFocus("name")}
                     style={{ width: "100%", padding: "12px", fontSize: "16px" }}
                   />
                 </div>
@@ -291,6 +305,7 @@ export function LandingPagePreview({ data, landingPageId, onSubmit }: LandingPag
                     required
                     value={formData.email || ""}
                     onChange={(e) => handleInputChange("email", e.target.value)}
+                    onFocus={() => handleFieldFocus("email")}
                     style={{ width: "100%", padding: "12px", fontSize: "16px" }}
                   />
                 </div>

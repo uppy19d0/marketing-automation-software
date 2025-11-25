@@ -3,6 +3,7 @@ import { landingPageService, LandingPage } from "../services/landingPageService"
 import { LandingPagePreview } from "./LandingPagePreview";
 import { Toaster } from "./ui/sonner";
 import { toast } from "sonner";
+import { useLandingAnalytics } from "../hooks/useLandingAnalytics";
 
 interface PublicLandingProps {
   slug: string;
@@ -12,6 +13,9 @@ export function PublicLanding({ slug }: PublicLandingProps) {
   const [landing, setLanding] = useState<LandingPage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Hook de analytics (el hook siempre se llama; internamente ignora mientras no haya landingPageId)
+  const analytics = useLandingAnalytics(landing?._id);
 
   useEffect(() => {
     const fetchLanding = async () => {
@@ -45,6 +49,11 @@ export function PublicLanding({ slug }: PublicLandingProps) {
       message: formData.message,
       source: formData.source,
     };
+
+    // Track form submit
+    if (analytics) {
+      analytics.trackFormSubmit(formData);
+    }
 
     await landingPageService.submitLandingPage(landing._id, payload);
   };
@@ -104,6 +113,8 @@ export function PublicLanding({ slug }: PublicLandingProps) {
           }
           await handleSubmit(form);
         }}
+        onButtonClick={analytics?.trackButtonClick}
+        onFormFocus={analytics?.trackFormFocus}
       />
       <Toaster />
     </>

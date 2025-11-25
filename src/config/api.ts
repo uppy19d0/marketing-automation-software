@@ -41,6 +41,10 @@ export const API_ENDPOINTS = {
   
   // Health
   HEALTH: `${API_BASE_URL}/health`,
+
+  // Analytics
+  DASHBOARD_OVERVIEW: `${API_BASE_URL}/analytics/dashboard`,
+  REPORTS_OVERVIEW: `${API_BASE_URL}/analytics/reports`,
 };
 
 // API Helper functions

@@ -3,6 +3,7 @@ import Campaign from '../models/Campaign';
 import Contact from '../models/Contact';
 import Event from '../models/Event';
 import { AuthRequest } from '../middleware/auth';
+import { sendEmail } from '../services/emailService';
 
 export const getCampaigns = async (req: AuthRequest, res: Response) => {
   try {
@@ -25,6 +26,26 @@ export const getCampaigns = async (req: AuthRequest, res: Response) => {
       data: campaigns,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const sendTestEmail = async (req: AuthRequest, res: Response) => {
+  try {
+    const { to } = req.body;
+
+    if (!to) {
+      return res.status(400).json({ success: false, message: 'Missing "to" in request body' });
+    }
+
+    await sendEmail(
+      to,
+      'Prueba de campaña',
+      '<h1>Prueba de campaña</h1><p>Este es un correo de prueba desde tu backend de Marketing Automation.</p>'
+    );
+
+    res.status(200).json({ success: true, message: `Test email sent to ${to}` });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -99,20 +120,29 @@ export const sendCampaign = async (req: AuthRequest, res: Response) => {
       recipients = await Contact.find({ status: 'subscribed' });
     }
 
+    // Enviar emails (simplificado: mismo contenido/subject para todos)
+    const subject = campaign.subject;
+    const html = campaign.content?.html || '<p>(Sin contenido)</p>';
+
+    const sendResults = await Promise.allSettled(
+      recipients.map((contact: any) =>
+        sendEmail(contact.email, subject, html)
+      )
+    );
+
+    const successful = sendResults.filter(r => r.status === 'fulfilled').length;
+
     campaign.recipientCount = recipients.length;
     campaign.status = 'sent';
     campaign.sentAt = new Date();
-    campaign.stats.sent = recipients.length;
+    campaign.stats.sent = successful;
 
     await campaign.save();
-
-    // TODO: Implement actual email sending logic here
-    // For now, just update the campaign status
 
     res.status(200).json({
       success: true,
       data: campaign,
-      message: `Campaign sent to ${recipients.length} recipients`,
+      message: `Campaign sent to ${successful} of ${recipients.length} recipients`,
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

@@ -7,6 +7,7 @@ import {
   deleteCampaign,
   sendCampaign,
   getCampaignStats,
+  sendTestEmail,
 } from '../controllers/campaignController';
 import { protect } from '../middleware/auth';
 
@@ -25,5 +26,6 @@ router.route('/:id')
 
 router.post('/:id/send', sendCampaign);
 router.get('/:id/stats', getCampaignStats);
+router.post('/test/send', sendTestEmail);
 
 export default router;
