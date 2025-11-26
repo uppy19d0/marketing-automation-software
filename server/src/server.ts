@@ -15,6 +15,7 @@ import segmentRoutes from './routes/segmentRoutes';
 import landingPageRoutes from './routes/landingPageRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import aiRoutes from './routes/aiRoutes';
+import customFieldRoutes from './routes/customFieldRoutes';
 
 // Load env vars
 dotenv.config();
@@ -85,6 +86,7 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/segments', segmentRoutes);
 app.use('/api/landing-pages', landingPageRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/custom-fields', customFieldRoutes);  // 📝 Custom fields for contacts
 app.use('/api/ai', aiRoutes);  // 🤖 AI-powered features
 
 // Root route
