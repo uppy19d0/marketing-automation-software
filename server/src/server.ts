@@ -14,6 +14,7 @@ import campaignRoutes from './routes/campaignRoutes';
 import segmentRoutes from './routes/segmentRoutes';
 import landingPageRoutes from './routes/landingPageRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
+import aiRoutes from './routes/aiRoutes';
 
 // Load env vars
 dotenv.config();
@@ -84,6 +85,7 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/segments', segmentRoutes);
 app.use('/api/landing-pages', landingPageRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/ai', aiRoutes);  // 🤖 AI-powered features
 
 // Root route
 app.get('/', (req, res) => {

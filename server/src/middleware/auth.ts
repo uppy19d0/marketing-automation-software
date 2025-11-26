@@ -73,3 +73,6 @@ export const authorize = (...roles: string[]) => {
     next();
   };
 };
+
+// Alias for compatibility
+export const auth = protect;
