@@ -39,16 +39,24 @@ export const errorHandler = (err: any, _req: Request, res: Response, _next: Next
     message: error.message || 'Server Error',
   };
 
+  // Ensure proper status codes propagate (avoid turning 404 into 500)
+  const statusCode =
+    res.statusCode !== 200
+      ? res.statusCode
+      : error.statusCode || 500;
+  res.status(statusCode);
+
   // Add stack trace in development
   if (process.env.NODE_ENV === 'development') {
     response.stack = err.stack;
   }
 
-  res.status(error.statusCode || 500).json(response);
+  res.json(response);
 };
 
 export const notFound = (req: Request, res: Response, next: NextFunction) => {
-  const error = new Error(`Not Found - ${req.originalUrl}`);
+  const error: any = new Error(`Not Found - ${req.originalUrl}`);
   res.status(404);
+  error.statusCode = 404;
   next(error);
 };

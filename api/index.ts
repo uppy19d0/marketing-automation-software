@@ -12,6 +12,7 @@ import contactRoutes from '../server/src/routes/contactRoutes';
 import campaignRoutes from '../server/src/routes/campaignRoutes';
 import segmentRoutes from '../server/src/routes/segmentRoutes';
 import landingPageRoutes from '../server/src/routes/landingPageRoutes';
+import analyticsRoutes from '../server/src/routes/analyticsRoutes';
 import { errorHandler, notFound } from '../server/src/middleware/errorHandler';
 import { seedDatabase } from '../server/src/utils/seedDatabase';
 
@@ -137,6 +138,7 @@ app.use('/api/contacts', contactRoutes);
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/segments', segmentRoutes);
 app.use('/api/landing-pages', landingPageRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Root route
 app.get('/api', (_req: Request, res: Response) => {
