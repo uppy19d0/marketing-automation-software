@@ -53,6 +53,22 @@ export const apiRequest = async (
   options: RequestInit = {}
 ): Promise<any> => {
   const token = localStorage.getItem('token');
+  const parseResponse = async (response: Response) => {
+    const contentType = response.headers.get('content-type') || '';
+
+    // Prefer JSON when available but gracefully handle plain-text error pages
+    if (contentType.includes('application/json')) {
+      return response.json();
+    }
+
+    const text = await response.text();
+
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text ? { message: text } : null;
+    }
+  };
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -66,10 +82,14 @@ export const apiRequest = async (
       headers,
     });
 
-    const data = await response.json();
+    const data = await parseResponse(response);
 
     if (!response.ok) {
-      throw new Error(data.message || 'API request failed');
+      const message =
+        (data as any)?.message ||
+        (data as any)?.error ||
+        `API request failed (${response.status})`;
+      throw new Error(message);
     }
 
     return data;
