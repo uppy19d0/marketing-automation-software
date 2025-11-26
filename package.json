@@ -56,7 +56,6 @@
     "react-hook-form": "^7.55.0",
     "react-resizable-panels": "^2.1.7",
     "recharts": "^2.15.2",
-    "sib-api-v3-sdk": "^8.5.0",
     "sonner": "^2.0.3",
     "tailwind-merge": "*",
     "uuid": "^9.0.1",
