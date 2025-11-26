@@ -102,7 +102,7 @@ class ContactService {
 
   async exportContacts(filters?: ContactFilters): Promise<Blob> {
     const params = new URLSearchParams();
-    
+
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -123,6 +123,15 @@ class ContactService {
     }
 
     return response.blob();
+  }
+
+  async sendEmailToContacts(contactIds: string[], subject: string, message: string): Promise<{ sent: number; failed: number; errors: any[] }> {
+    const response = await api.post(`${API_ENDPOINTS.CONTACTS}/send-email`, {
+      contactIds,
+      subject,
+      message,
+    });
+    return response.data;
   }
 }
 

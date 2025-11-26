@@ -4,6 +4,7 @@ import Event from '../models/Event';
 import { AuthRequest } from '../middleware/auth';
 import csv from 'csv-parser';
 import { Readable } from 'stream';
+import { sendEmail } from '../services/emailService';
 
 // @desc    Get all contacts
 // @route   GET /api/contacts
@@ -289,6 +290,69 @@ export const bulkTagAssignment = async (req: AuthRequest, res: Response) => {
       data: {
         modified: result.modifiedCount,
       },
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error',
+    });
+  }
+};
+
+// @desc    Send email to contacts
+// @route   POST /api/contacts/send-email
+// @access  Private
+export const sendEmailToContacts = async (req: AuthRequest, res: Response) => {
+  try {
+    const { contactIds, subject, message } = req.body;
+
+    if (!contactIds || !Array.isArray(contactIds) || contactIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'contactIds array is required',
+      });
+    }
+
+    if (!subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: 'subject and message are required',
+      });
+    }
+
+    // Get contacts by IDs
+    const contacts = await Contact.find({ _id: { $in: contactIds } });
+
+    if (contacts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No contacts found',
+      });
+    }
+
+    const results = {
+      sent: 0,
+      failed: 0,
+      errors: [] as any[],
+    };
+
+    // Send email to each contact
+    for (const contact of contacts) {
+      try {
+        await sendEmail(contact.email, subject, message);
+        results.sent++;
+      } catch (error: any) {
+        results.failed++;
+        results.errors.push({
+          email: contact.email,
+          error: error.message,
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: results,
     });
   } catch (error: any) {
     res.status(500).json({

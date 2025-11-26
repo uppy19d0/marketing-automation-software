@@ -8,6 +8,7 @@ import {
   deleteContact,
   importContacts,
   bulkTagAssignment,
+  sendEmailToContacts,
 } from '../controllers/contactController';
 import { protect } from '../middleware/auth';
 
@@ -22,6 +23,7 @@ router.route('/')
 
 router.post('/import', upload.single('file'), importContacts);
 router.post('/bulk-tag', bulkTagAssignment);
+router.post('/send-email', sendEmailToContacts);
 
 router.route('/:id')
   .get(getContact)

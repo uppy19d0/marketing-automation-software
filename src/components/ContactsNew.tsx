@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
+import { Textarea } from "./ui/textarea";
 import { Search, Upload, Trash2, Tag, Plus, Mail, MousePointerClick, UserCheck, Eye } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { contactService, Contact, ContactDetailResponse } from "../services/contactService";
@@ -48,6 +49,11 @@ export function ContactsNew() {
   const [formData, setFormData] = useState(initialForm);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<string | null>(null);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailResult, setEmailResult] = useState<string | null>(null);
 
   useEffect(() => {
     loadContacts();
@@ -200,6 +206,47 @@ export function ContactsNew() {
     return parsed.toLocaleDateString();
   };
 
+  const handleSendEmail = async () => {
+    if (selectedRows.length === 0) {
+      setEmailResult("Selecciona al menos un contacto");
+      return;
+    }
+
+    if (!emailSubject || !emailMessage) {
+      setEmailResult("El asunto y el mensaje son obligatorios");
+      return;
+    }
+
+    setSendingEmail(true);
+    setEmailResult(null);
+
+    try {
+      const result = await contactService.sendEmailToContacts(
+        selectedRows,
+        emailSubject,
+        emailMessage
+      );
+
+      setEmailResult(
+        `${language === "es" ? "Enviados" : "Sent"}: ${result.sent} ${
+          result.failed > 0 ? `• ${language === "es" ? "Fallidos" : "Failed"}: ${result.failed}` : ""
+        }`
+      );
+      setEmailSubject("");
+      setEmailMessage("");
+      setSelectedRows([]);
+
+      setTimeout(() => {
+        setEmailDialogOpen(false);
+        setEmailResult(null);
+      }, 2000);
+    } catch (err: any) {
+      setEmailResult(err.message || "Error al enviar correos");
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -344,6 +391,10 @@ export function ContactsNew() {
           {selectedRows.length > 0 && (
             <div className="flex items-center gap-2 mt-4 p-3 bg-accent rounded-lg">
               <p className="text-sm flex-1">{selectedRows.length} contacto(s) seleccionado(s)</p>
+              <Button variant="outline" size="sm" onClick={() => setEmailDialogOpen(true)}>
+                <Mail className="h-4 w-4 mr-2" />
+                {language === "es" ? "Enviar correo" : "Send email"}
+              </Button>
               <Button variant="outline" size="sm" disabled>
                 <Tag className="h-4 w-4 mr-2" />
                 Etiquetar
@@ -510,6 +561,54 @@ export function ContactsNew() {
           )}
         </SheetContent>
       </Sheet>
+
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {language === "es" ? "Enviar correo a contactos" : "Send email to contacts"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              {language === "es"
+                ? `Enviar correo a ${selectedRows.length} contacto(s) seleccionado(s)`
+                : `Send email to ${selectedRows.length} selected contact(s)`}
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="subject">{language === "es" ? "Asunto" : "Subject"}</Label>
+              <Input
+                id="subject"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder={language === "es" ? "Asunto del correo" : "Email subject"}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="message">{language === "es" ? "Mensaje" : "Message"}</Label>
+              <Textarea
+                id="message"
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                placeholder={language === "es" ? "Escribe tu mensaje aquí..." : "Write your message here..."}
+                rows={8}
+              />
+            </div>
+            <Button
+              className="w-full"
+              onClick={handleSendEmail}
+              disabled={sendingEmail}
+            >
+              {sendingEmail
+                ? (language === "es" ? "Enviando..." : "Sending...")
+                : (language === "es" ? "Enviar correo" : "Send email")}
+            </Button>
+            {emailResult && (
+              <p className="text-sm text-muted-foreground">{emailResult}</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
